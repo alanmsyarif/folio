@@ -17,12 +17,25 @@ export async function pdfToPages(file, onProgress) {
     for (let n = 1; n <= pdf.numPages; n++) {
       const page = await pdf.getPage(n);
       const base = page.getViewport({ scale: 1 });
-      const viewport = page.getViewport({ scale: LONG_SIDE / Math.max(base.width, base.height) });
+      if (n === 1) {
+        const s = LONG_SIDE / Math.max(base.width, base.height);
+        width = Math.round(base.width * s);
+        height = Math.round(base.height * s);
+      }
+      // Every page is baked at page 1's size (others fitted and centred), so the viewer's
+      // uniform page boxes and the overlay fractions line up on every page.
+      const r = window.FolioModel.fitRect(base.width, base.height, width, height);
+      const viewport = page.getViewport({ scale: r.w / base.width });
       const canvas = document.createElement('canvas');
-      canvas.width = Math.round(viewport.width);
-      canvas.height = Math.round(viewport.height);
-      await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
-      if (n === 1) { width = canvas.width; height = canvas.height; }
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(0, 0, width, height);
+      ctx.beginPath();
+      ctx.rect(r.x, r.y, r.w, r.h); // pdf.js doesn't clip to the page box; keep the margins clean
+      ctx.clip();
+      await page.render({ canvasContext: ctx, viewport, transform: [1, 0, 0, 1, r.x, r.y] }).promise;
       blobs.push(await new Promise((ok, fail) =>
         canvas.toBlob(b => (b ? ok(b) : fail(new Error('WebP encoding failed on page ' + n))), 'image/webp', QUALITY)));
       page.cleanup();

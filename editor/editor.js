@@ -47,6 +47,8 @@ function changed() {
 
 function load(book, blobs) {
   for (const u of state.urls.values()) URL.revokeObjectURL(u);
+  // Export compares ids to tell "same book again" from "another book in this folder".
+  if (!book.id) book.id = M.newId();
   Object.assign(state, { book, blobs, urls: new Map(), current: 0, selected: null, dirty: false });
   $('title').value = book.title || '';
   for (const id of ['title', 'preview', 'export']) $(id).disabled = false;

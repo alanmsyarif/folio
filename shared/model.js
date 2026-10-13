@@ -96,12 +96,42 @@
     return used;
   }
 
-  // Files in pages/ or media/ that the book no longer uses. Only deletes inside a folder that
-  // already held a book.js, so exporting into an unrelated folder never removes its files.
-  function staleFiles(book, folder, names, rootNames) {
-    if (!rootNames.includes('book.js')) return [];
-    const used = usedPaths(book);
-    return names.filter(n => !used.has(folder + '/' + n));
+  // Decides what Export may do in a picked folder. existing.files lists the folder's root files
+  // plus pages/<name> and media/<name>. Returns the question to ask first (or null) and the
+  // pages/media files to delete. Only a folder holding a parsable Folio book.js ever loses files;
+  // a different book (other id) or a foreign folder is never touched without asking.
+  function exportPlan(book, existing) {
+    const { folder, bookText, files } = existing;
+    let old = null;
+    if (bookText != null) { try { old = parseBookJs(bookText); } catch { old = null; } }
+    if (old) {
+      const used = usedPaths(book);
+      const remove = files.filter(f => /^(pages|media)\//.test(f) && !used.has(f));
+      const ask = old.id && old.id === book.id ? null
+        : `Replace the book "${old.title || 'Untitled'}" in "${folder}"? Its pages and media files that this book doesn't use will be deleted.`;
+      return { ask, remove };
+    }
+    if (!files.length) return { ask: null, remove: [] };
+    const writes = new Set([...VIEWER_FILES.map(f => f[1]), 'book.js', ...usedPaths(book)]);
+    const clash = files.filter(f => writes.has(f));
+    const ask = clash.length
+      ? `"${folder}" isn't a Folio book. These files in it will be replaced: ${clash.join(', ')}. Other files are kept.`
+      : `"${folder}" already has files and isn't a Folio book. Write the book into it? Existing files are kept.`;
+    return { ask, remove: [] };
+  }
+
+  // Page indexes on screen for page-flip with showCover: the cover and an even last page show
+  // alone, other spreads are [i, i + 1]; portrait shows one page.
+  function visiblePages(index, pageCount, portrait) {
+    if (portrait || index === 0) return [index];
+    return [index, index + 1].filter(n => n < pageCount);
+  }
+
+  // Where a page of size srcW×srcH goes, scaled to fit and centred, inside a boxW×boxH page.
+  function fitRect(srcW, srcH, boxW, boxH) {
+    const scale = Math.min(boxW / srcW, boxH / srcH);
+    const w = Math.round(srcW * scale), h = Math.round(srcH * scale);
+    return { x: Math.round((boxW - w) / 2), y: Math.round((boxH - h) / 2), w, h };
   }
 
   function serializeBook(book) {
@@ -123,7 +153,7 @@
 
   const api = {
     VIEWER_FILES, toEmbedUrl, isSafeHref, clampRect, validateOverlay, firstInvalid,
-    newId, mediaName, isLocalPath, usedPaths, staleFiles, serializeBook, parseBookJs,
+    newId, mediaName, isLocalPath, usedPaths, exportPlan, visiblePages, fitRect, serializeBook, parseBookJs,
   };
   root.FolioModel = api;
   if (typeof module === 'object' && module.exports) module.exports = api;

@@ -29,20 +29,26 @@ export async function exportBook(book, blobs) {
   }));
 
   const root = await window.showDirectoryPicker({ id: 'folio', mode: 'readwrite' });
-  const rootNames = await entryNames(root);
-  if (rootNames.length && !rootNames.includes('book.js') &&
-      !confirm(`"${root.name}" already has files and isn't a Folio book. Write the book into it anyway? Nothing there will be deleted.`)) {
-    return null;
+  const files = await entryNames(root, 'file');
+  for (const folder of ['pages', 'media']) {
+    try {
+      for (const name of await entryNames(await root.getDirectoryHandle(folder), 'file')) files.push(folder + '/' + name);
+    } catch { /* no such folder yet */ }
   }
+  const bookText = files.includes('book.js')
+    ? await (await (await root.getFileHandle('book.js')).getFile()).text()
+    : null;
+  const plan = M.exportPlan(book, { folder: root.name, bookText, files });
+  if (plan.ask && !confirm(plan.ask)) return null;
 
   for (const [to, blob] of template) await writeFile(root, to, blob);
   for (const path of M.usedPaths(book)) {
     const [folder, name] = path.split('/');
     await writeFile(await root.getDirectoryHandle(folder, { create: true }), name, blobs.get(path));
   }
-  for (const folder of ['pages', 'media']) {
-    const dir = await root.getDirectoryHandle(folder, { create: true });
-    for (const name of M.staleFiles(book, folder, await entryNames(dir, 'file'), rootNames)) await dir.removeEntry(name);
+  for (const path of plan.remove) {
+    const [folder, name] = path.split('/');
+    await (await root.getDirectoryHandle(folder)).removeEntry(name);
   }
   // Written last: a folder only counts as a book once everything it points to is there.
   await writeFile(root, 'book.js', M.serializeBook(book));

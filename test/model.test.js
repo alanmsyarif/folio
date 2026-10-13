@@ -89,11 +89,53 @@ test('usedPaths lists local page and media files only', () => {
   assert.deepEqual([...M.usedPaths(book())].sort(), ['media/a.png', 'pages/1.webp', 'pages/2.webp']);
 });
 
-test('staleFiles lists unreferenced files, but never in a folder that was not a book', () => {
-  const names = ['a.png', 'old.mp4', 'notes.txt'];
-  assert.deepEqual(M.staleFiles(book(), 'media', names, ['book.js', 'index.html']), ['old.mp4', 'notes.txt']);
-  assert.deepEqual(M.staleFiles(book(), 'media', names, ['report.docx']), []);
-  assert.deepEqual(M.staleFiles(book(), 'pages', ['1.webp', '2.webp', '3.webp'], ['book.js']), ['3.webp']);
+test('exportPlan: empty folder writes without asking', () => {
+  assert.deepEqual(M.exportPlan({ ...book(), id: 'b1' }, { folder: 'new', bookText: null, files: [] }), { ask: null, remove: [] });
+});
+
+test('exportPlan: re-exporting the same book removes only its unused pages and media', () => {
+  const b = { ...book(), id: 'b1' };
+  const files = ['book.js', 'index.html', 'notes.txt', 'pages/1.webp', 'pages/2.webp', 'pages/3.webp', 'media/a.png', 'media/old.mp4'];
+  assert.deepEqual(M.exportPlan(b, { folder: 'A', bookText: M.serializeBook(b), files }), { ask: null, remove: ['pages/3.webp', 'media/old.mp4'] });
+});
+
+test('exportPlan: a different Folio book in the folder is replaced only after asking', () => {
+  const old = { ...book(), id: 'b0', title: 'Old book' };
+  const plan = M.exportPlan({ ...book(), id: 'b1' }, { folder: 'A', bookText: M.serializeBook(old), files: ['book.js', 'pages/1.webp', 'media/zzz.png'] });
+  assert.equal(plan.ask, 'Replace the book "Old book" in "A"? Its pages and media files that this book doesn\'t use will be deleted.');
+  assert.deepEqual(plan.remove, ['media/zzz.png']);
+});
+
+test('exportPlan: a foreign folder names the files it would replace and removes nothing', () => {
+  const plan = M.exportPlan({ ...book(), id: 'b1' }, { folder: 'site', bookText: null, files: ['index.html', 'about.html', 'pages/1.webp', 'media/notes.txt'] });
+  assert.equal(plan.ask, '"site" isn\'t a Folio book. These files in it will be replaced: index.html, pages/1.webp. Other files are kept.');
+  assert.deepEqual(plan.remove, []);
+});
+
+test('exportPlan: a foreign folder with no name clashes still asks', () => {
+  const plan = M.exportPlan({ ...book(), id: 'b1' }, { folder: 'docs', bookText: null, files: ['report.docx'] });
+  assert.equal(plan.ask, '"docs" already has files and isn\'t a Folio book. Write the book into it? Existing files are kept.');
+  assert.deepEqual(plan.remove, []);
+});
+
+test('exportPlan: a book.js that is not a Folio book counts as foreign', () => {
+  const plan = M.exportPlan({ ...book(), id: 'b1' }, { folder: 'js', bookText: 'var x = 1;', files: ['book.js', 'media/x.png'] });
+  assert.equal(plan.ask, '"js" isn\'t a Folio book. These files in it will be replaced: book.js. Other files are kept.');
+  assert.deepEqual(plan.remove, []);
+});
+
+test('visiblePages follows page-flip spreads (cover alone, then pairs)', () => {
+  assert.deepEqual(M.visiblePages(0, 6, false), [0]);
+  assert.deepEqual(M.visiblePages(1, 6, false), [1, 2]);
+  assert.deepEqual(M.visiblePages(3, 6, false), [3, 4]);
+  assert.deepEqual(M.visiblePages(5, 6, false), [5]);
+  assert.deepEqual(M.visiblePages(3, 6, true), [3]);
+});
+
+test('fitRect centres a page of another shape inside the book page size', () => {
+  assert.deepEqual(M.fitRect(2000, 1000, 1000, 1414), { x: 0, y: 457, w: 1000, h: 500 });
+  assert.deepEqual(M.fitRect(500, 1000, 1000, 1414), { x: 147, y: 0, w: 707, h: 1414 });
+  assert.deepEqual(M.fitRect(1000, 1414, 1000, 1414), { x: 0, y: 0, w: 1000, h: 1414 });
 });
 
 test('mediaName and newId', () => {

@@ -41,15 +41,18 @@ Vendored: pdf.js 6.4.299, page-flip 2.0.7 (see vendor/LICENSES.md).
 
 | Check | Result |
 |---|---|
-| `npm test` (book model) | 12/12 pass |
+| `npm test` (book model) | 19/19 pass |
 | Viewer from `file://`: flip by button, arrow keys and drag; single page in a narrow window | pass |
 | Dragging on a video does not turn the page; the same drag on bare page does | pass |
 | Page link jumps to its page; web link opens a new tab without flipping | pass |
 | Editor: PDF import (pages baked at 2000 px), broken PDF shows an error | pass |
+| PDF with a landscape page among portrait ones: every page baked at page 1 size, centred | pass |
+| Hidden YouTube/Vimeo player resets as soon as its spread leaves the screen | pass (stubbed player) |
 | Editor: draw, type, move (clamped), resize (min size), delete, preview | pass |
 | Export blocked by an unfinished box, which gets selected | pass |
 | Export / reopen / re-export into the same folder 3 times; removed media deleted | pass (browser-private storage stand-in for the folder picker) |
-| Exporting into an unrelated folder asks first and deletes nothing there | pass (same stand-in) |
+| Exporting into an unrelated folder asks first, names files it would replace, deletes nothing | pass (same stand-in) |
+| Exporting a different book into an existing book folder asks before replacing it | pass (same stand-in) |
 | Exported folder opened from disk shows every box | pass |
 
 Not yet checked in a real browser window:

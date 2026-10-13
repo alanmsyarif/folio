@@ -47,7 +47,7 @@
     count.textContent = (i + 1) + ' / ' + B.pages.length;
     for (const v of document.querySelectorAll('video')) v.pause();
     // Stop embedded players on pages that just left the view by reloading them.
-    const now = [i - 1, i, i + 1];
+    const now = FolioModel.visiblePages(i, B.pages.length, flip.getOrientation() === 'portrait');
     for (const idx of visible) {
       if (!now.includes(idx) && pageEls[idx]) {
         for (const f of pageEls[idx].querySelectorAll('iframe')) f.src = f.src;
@@ -56,6 +56,7 @@
     visible = now;
   }
   flip.on('flip', onPageChange);
+  flip.on('changeOrientation', onPageChange); // spread ↔ single page changes what is on screen
   onPageChange();
 
   bookEl.addEventListener('click', e => {
