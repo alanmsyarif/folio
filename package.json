@@ -1,0 +1,9 @@
+{
+  "name": "folio",
+  "private": true,
+  "scripts": {
+    "start": "node serve.js",
+    "test": "node --test \"test/*.test.js\"",
+    "demo": "node test/make-demo.js"
+  }
+}

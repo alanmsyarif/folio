@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Folio editor</title>
+<link rel="stylesheet" href="../shared/overlays.css">
+<link rel="stylesheet" href="editor.css">
+</head>
+<body>
+<header id="toolbar">
+  <label class="btn">Open PDF<input type="file" id="pdf-input" accept="application/pdf" hidden></label>
+  <button id="open-folder" type="button">Open book folder</button>
+  <input id="title" placeholder="Book title" aria-label="Book title" disabled>
+  <button id="preview" type="button" aria-pressed="false" disabled>Preview</button>
+  <button id="export" type="button" disabled>Export…</button>
+  <span id="status" role="status"></span>
+</header>
+<main>
+  <nav id="thumbs" aria-label="Pages"></nav>
+  <section id="stage">
+    <div id="page" hidden><img id="page-img" alt=""><div id="layer" class="fo-layer"></div></div>
+  </section>
+  <aside id="props"></aside>
+</main>
+<script src="../shared/model.js"></script>
+<script src="../shared/overlays.js"></script>
+<script type="module" src="editor.js"></script>
+</body>
+</html>

@@ -1,0 +1,7 @@
+/* Overlay boxes, placed in fractions of the page. Shared by the editor preview and the viewer. */
+.fo-layer { position: absolute; inset: 0; }
+.fo-overlay { position: absolute; box-sizing: border-box; margin: 0; border: 0; padding: 0; }
+.fo-image { object-fit: contain; }
+.fo-video { object-fit: contain; background: #000; }
+.fo-link { display: block; border-radius: 3px; }
+.fo-link:hover, .fo-link:focus-visible { background: rgba(255, 200, 0, 0.2); outline: 2px solid rgba(255, 170, 0, 0.9); }
