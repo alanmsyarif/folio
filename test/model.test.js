@@ -23,6 +23,17 @@ test('toEmbedUrl accepts Vimeo URL forms, keeping the unlisted hash', () => {
   assert.equal(M.toEmbedUrl('https://vimeo.com/76979871?h=<script>'), 'https://player.vimeo.com/video/76979871');
 });
 
+test('toEmbedUrl with autoplay adds muted autoplay and loop parameters', () => {
+  const auto = { autoplay: true };
+  assert.equal(M.toEmbedUrl('https://youtu.be/aqz-KE-bpKQ', auto),
+    'https://www.youtube-nocookie.com/embed/aqz-KE-bpKQ?autoplay=1&mute=1&loop=1&playlist=aqz-KE-bpKQ&playsinline=1');
+  assert.equal(M.toEmbedUrl('https://vimeo.com/76979871', auto),
+    'https://player.vimeo.com/video/76979871?autoplay=1&muted=1&loop=1');
+  assert.equal(M.toEmbedUrl('https://vimeo.com/76979871/8272103f6e', auto),
+    'https://player.vimeo.com/video/76979871?h=8272103f6e&autoplay=1&muted=1&loop=1');
+  assert.equal(M.toEmbedUrl('https://example.com/x', auto), null);
+});
+
 test('toEmbedUrl rejects everything else', () => {
   for (const u of [
     '', 'not a url', 'javascript:alert(1)',

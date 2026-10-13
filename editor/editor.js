@@ -90,6 +90,7 @@ function renderLayer() {
   layer.classList.toggle('preview', state.preview);
   if (state.preview) {
     FolioOverlays.renderPageOverlays(layer, p, urlFor);
+    FolioOverlays.setActive(layer, true);
     return;
   }
   layer.replaceChildren(...p.overlays.map(o => {
@@ -189,6 +190,18 @@ function renderProps() {
       changed();
     };
     props.append(...field('Web address', href), ...field('…or go to page', pg));
+  }
+
+  if (o.type === 'video' || o.type === 'embed') {
+    const auto = input('p-autoplay', 'checkbox', { checked: !!o.autoplay });
+    auto.onchange = () => {
+      if (auto.checked) o.autoplay = true; else delete o.autoplay;
+      changed();
+    };
+    const l = document.createElement('label');
+    l.className = 'check';
+    l.append(auto, ' Autoplay and loop (starts muted)');
+    props.append(l);
   }
 
   const error = M.validateOverlay(o, state.book.pages.length);

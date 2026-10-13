@@ -29,6 +29,12 @@ pages[2].overlays.push(
 pages[3].overlays.push(
   { id: 'd5', type: 'image', x: 0.25, y: 0.3, w: 0.5, h: 0.4, src: 'pages/1.svg' },
 );
+pages[4].overlays.push(
+  { id: 'd6', type: 'video', x: 0.05, y: 0.3, w: 0.9, h: 0.4, src: 'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.webm', autoplay: true },
+);
+pages[5].overlays.push(
+  { id: 'd7', type: 'embed', x: 0.05, y: 0.3, w: 0.9, h: 0.3, url: 'https://youtu.be/aqz-KE-bpKQ', autoplay: true },
+);
 
 for (const [from, to] of VIEWER_FILES) fs.copyFileSync(path.join(root, from), path.join(out, to));
 fs.writeFileSync(path.join(out, 'book.js'),

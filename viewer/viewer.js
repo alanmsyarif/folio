@@ -45,14 +45,10 @@
   function onPageChange() {
     const i = flip.getCurrentPageIndex();
     count.textContent = (i + 1) + ' / ' + B.pages.length;
-    for (const v of document.querySelectorAll('video')) v.pause();
-    // Stop embedded players on pages that just left the view by reloading them.
+    // Pages leaving the screen stop their media; pages arriving start their autoplay media.
     const now = FolioModel.visiblePages(i, B.pages.length, flip.getOrientation() === 'portrait');
-    for (const idx of visible) {
-      if (!now.includes(idx) && pageEls[idx]) {
-        for (const f of pageEls[idx].querySelectorAll('iframe')) f.src = f.src;
-      }
-    }
+    for (const idx of visible) if (!now.includes(idx) && pageEls[idx]) FolioOverlays.setActive(pageEls[idx], false);
+    for (const idx of now) if (!visible.includes(idx) && pageEls[idx]) FolioOverlays.setActive(pageEls[idx], true);
     visible = now;
   }
   flip.on('flip', onPageChange);

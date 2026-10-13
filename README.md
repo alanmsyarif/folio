@@ -15,6 +15,9 @@ Open http://127.0.0.1:8080/editor/ in Chrome, Edge or Opera (export needs the Fi
    - **Video file**: MP4 or WebM from disk, copied into the book.
    - **YouTube / Vimeo link**: paste the normal page address.
    - **Link**: a web address, or a page number to jump to.
+
+   Video boxes have an **Autoplay and loop** checkbox. The video starts when its page turns into
+   view and loops; browsers only allow this muted, so readers unmute it from the player controls.
 3. Drag a box to move it, drag its corners to resize, and press Delete to remove it.
    **Preview** shows the boxes working.
 4. **Export…** and pick a folder. To keep editing later, use **Open book folder** on that same folder,
@@ -41,13 +44,14 @@ Vendored: pdf.js 6.4.299, page-flip 2.0.7 (see vendor/LICENSES.md).
 
 | Check | Result |
 |---|---|
-| `npm test` (book model) | 19/19 pass |
+| `npm test` (book model) | 20/20 pass |
 | Viewer from `file://`: flip by button, arrow keys and drag; single page in a narrow window | pass |
 | Dragging on a video does not turn the page; the same drag on bare page does | pass |
 | Page link jumps to its page; web link opens a new tab without flipping | pass |
 | Editor: PDF import (pages baked at 2000 px), broken PDF shows an error | pass |
 | PDF with a landscape page among portrait ones: every page baked at page 1 size, centred | pass |
 | Hidden YouTube/Vimeo player resets as soon as its spread leaves the screen | pass (stubbed player) |
+| Autoplay boxes: video starts muted and loops only while its page is on screen; YouTube box loads only while on screen; setting saved on export | pass (play() counted, player stubbed) |
 | Editor: draw, type, move (clamped), resize (min size), delete, preview | pass |
 | Export blocked by an unfinished box, which gets selected | pass |
 | Export / reopen / re-export into the same folder 3 times; removed media deleted | pass (browser-private storage stand-in for the folder picker) |

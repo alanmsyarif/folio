@@ -17,7 +17,8 @@
     ['vendor/page-flip.browser.js', 'page-flip.browser.js'],
   ];
 
-  function toEmbedUrl(url) {
+  // opts.autoplay: muted autoplay + loop (browsers only autoplay muted; YouTube loops via playlist=ID).
+  function toEmbedUrl(url, opts = {}) {
     let u;
     try { u = new URL(url); } catch { return null; }
     if (u.protocol !== 'https:' && u.protocol !== 'http:') return null;
@@ -28,13 +29,18 @@
         : u.pathname === '/watch'
           ? u.searchParams.get('v')
           : (u.pathname.match(/^\/(?:shorts|embed|live)\/([\w-]+)/) || [])[1];
-      return id && /^[\w-]{11}$/.test(id) ? 'https://www.youtube-nocookie.com/embed/' + id : null;
+      if (!id || !/^[\w-]{11}$/.test(id)) return null;
+      return 'https://www.youtube-nocookie.com/embed/' + id +
+        (opts.autoplay ? `?autoplay=1&mute=1&loop=1&playlist=${id}&playsinline=1` : '');
     }
     if (host === 'vimeo.com' || host === 'player.vimeo.com') {
       const m = u.pathname.match(/^\/(?:video\/)?(\d+)(?:\/([\da-f]+))?\/?$/);
       if (!m) return null;
       const hash = m[2] || u.searchParams.get('h');
-      return 'https://player.vimeo.com/video/' + m[1] + (hash && /^[\da-f]+$/.test(hash) ? '?h=' + hash : '');
+      const params = [];
+      if (hash && /^[\da-f]+$/.test(hash)) params.push('h=' + hash);
+      if (opts.autoplay) params.push('autoplay=1', 'muted=1', 'loop=1');
+      return 'https://player.vimeo.com/video/' + m[1] + (params.length ? '?' + params.join('&') : '');
     }
     return null;
   }

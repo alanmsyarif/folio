@@ -18,9 +18,23 @@
       el.controls = true;
       el.playsInline = true;
       el.preload = 'metadata';
+      if (o.autoplay) {
+        // Browsers only autoplay muted media; the reader can unmute from the controls.
+        el.muted = true;
+        el.setAttribute('muted', ''); // survives page-flip's cloneNode during the turn animation
+        el.loop = true;
+        el.dataset.autoplay = '';
+      }
     } else if (o.type === 'embed') {
       el = document.createElement('iframe');
-      el.src = M.toEmbedUrl(o.url) || 'about:blank';
+      if (o.autoplay) {
+        // Loaded only while on screen (see setActive), so hidden players never run.
+        el.dataset.src = M.toEmbedUrl(o.url, { autoplay: true }) || 'about:blank';
+        el.dataset.autoplay = '';
+        el.src = 'about:blank';
+      } else {
+        el.src = M.toEmbedUrl(o.url) || 'about:blank';
+      }
       el.allow = 'autoplay; fullscreen; picture-in-picture; encrypted-media';
       el.allowFullscreen = true;
       el.referrerPolicy = 'strict-origin-when-cross-origin';
@@ -51,5 +65,19 @@
     layer.replaceChildren(...page.overlays.map(o => renderOverlay(o, srcFor)));
   }
 
-  root.FolioOverlays = { renderOverlay, renderPageOverlays };
+  // Call when a page (or the editor preview) comes on screen (on = true) or leaves it.
+  // On: autoplay videos start, autoplay embeds load. Off: videos pause, autoplay embeds unload,
+  // other embeds reload so their player stops.
+  function setActive(container, on) {
+    for (const v of container.querySelectorAll('video.fo-overlay')) {
+      if (!on) v.pause();
+      else if ('autoplay' in v.dataset) v.play().catch(() => {}); // rejected if the browser still blocks it
+    }
+    for (const f of container.querySelectorAll('iframe.fo-overlay')) {
+      if ('autoplay' in f.dataset) f.src = on ? f.dataset.src : 'about:blank';
+      else if (!on) f.src = f.src;
+    }
+  }
+
+  root.FolioOverlays = { renderOverlay, renderPageOverlays, setActive };
 })(globalThis);
