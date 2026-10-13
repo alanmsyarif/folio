@@ -1,0 +1,36 @@
+// Builds demo/: a 6-page book with SVG pages and one overlay of each kind, for checking the viewer by hand.
+// Usage: npm run demo, then open demo/index.html (file://) or http://127.0.0.1:8080/demo/ via npm start.
+const fs = require('fs');
+const path = require('path');
+const { serializeBook, VIEWER_FILES } = require('../shared/model.js');
+
+const root = path.join(__dirname, '..');
+const out = path.join(root, 'demo');
+fs.rmSync(out, { recursive: true, force: true });
+fs.mkdirSync(path.join(out, 'pages'), { recursive: true });
+
+const W = 700, H = 990;
+const pages = [];
+for (let i = 1; i <= 6; i++) {
+  fs.writeFileSync(path.join(out, 'pages', i + '.svg'),
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}">` +
+    `<rect width="100%" height="100%" fill="hsl(${i * 50},40%,92%)"/>` +
+    `<text x="50%" y="12%" font-size="64" text-anchor="middle" font-family="sans-serif">Page ${i}</text></svg>`);
+  pages.push({ image: `pages/${i}.svg`, overlays: [] });
+}
+pages[1].overlays.push(
+  { id: 'd1', type: 'link', x: 0.1, y: 0.3, w: 0.8, h: 0.1, page: 5 },
+  { id: 'd2', type: 'link', x: 0.1, y: 0.5, w: 0.8, h: 0.1, href: 'https://example.com/' },
+);
+pages[2].overlays.push(
+  { id: 'd3', type: 'embed', x: 0.05, y: 0.25, w: 0.9, h: 0.3, url: 'https://www.youtube.com/watch?v=aqz-KE-bpKQ' },
+  { id: 'd4', type: 'video', x: 0.05, y: 0.6, w: 0.9, h: 0.3, src: 'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4' },
+);
+pages[3].overlays.push(
+  { id: 'd5', type: 'image', x: 0.25, y: 0.3, w: 0.5, h: 0.4, src: 'pages/1.svg' },
+);
+
+for (const [from, to] of VIEWER_FILES) fs.copyFileSync(path.join(root, from), path.join(out, to));
+fs.writeFileSync(path.join(out, 'book.js'),
+  serializeBook({ version: 1, title: 'Folio demo', pageWidth: W, pageHeight: H, pages }));
+console.log('Wrote ' + out);
