@@ -1,5 +1,6 @@
 // Folio editor: import a PDF as page images, draw overlay boxes, export a static flipbook folder.
 import { pdfToPages } from './pdf-import.js';
+import { exportBook, openBook } from './folder.js';
 
 const M = window.FolioModel;
 const $ = id => document.getElementById(id);
@@ -301,6 +302,43 @@ $('preview').onclick = () => {
   state.selected = null;
   renderLayer();
   renderProps();
+};
+
+if (!('showDirectoryPicker' in window)) {
+  for (const id of ['open-folder', 'export']) $(id).title = 'Needs Chrome, Edge or Opera';
+  $('open-folder').disabled = true;
+  status('Export and Open folder need a Chromium browser (Chrome, Edge, Opera).', true);
+}
+
+$('export').onclick = async () => {
+  const bad = M.firstInvalid(state.book);
+  if (bad) {
+    Object.assign(state, { current: bad.page, selected: bad.id, preview: false });
+    $('preview').setAttribute('aria-pressed', 'false');
+    render();
+    status(`Page ${bad.page + 1}: ${bad.error}`, true);
+    return;
+  }
+  try {
+    status('Exporting…');
+    const name = await exportBook(state.book, state.blobs);
+    if (name === null) { status('Export cancelled'); return; }
+    state.dirty = false;
+    status(`Exported to "${name}". Open index.html in that folder.`);
+  } catch (err) {
+    status(err.name === 'AbortError' ? 'Export cancelled' : 'Export failed: ' + err.message, err.name !== 'AbortError');
+  }
+};
+
+$('open-folder').onclick = async () => {
+  if (state.dirty && !confirm('Discard unsaved changes?')) return;
+  try {
+    const { book, blobs } = await openBook();
+    load(book, blobs);
+    status(`Opened "${book.title}"`);
+  } catch (err) {
+    if (err.name !== 'AbortError') status(err.message, true);
+  }
 };
 
 renderProps();
