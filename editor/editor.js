@@ -75,14 +75,138 @@ function renderThumbs() {
   }));
 }
 
-// Filled in by Task 4.
-function renderLayer() {}
+const selected = () => page().overlays.find(o => o.id === state.selected);
+
+function label(o) {
+  if (o.type === 'link') return o.page ? 'Go to page ' + o.page : o.href || 'Link';
+  return { image: o.src ? '' : 'Image', video: 'Video', embed: 'Video link' }[o.type] ?? 'Choose a type';
+}
+
+function renderLayer() {
+  const p = page();
+  layer.classList.toggle('preview', state.preview);
+  if (state.preview) {
+    FolioOverlays.renderPageOverlays(layer, p, urlFor);
+    return;
+  }
+  layer.replaceChildren(...p.overlays.map(o => {
+    const el = document.createElement('div');
+    el.className = 'box';
+    if (o.id === state.selected) el.classList.add('selected');
+    if (M.validateOverlay(o, state.book.pages.length)) el.classList.add('invalid');
+    el.dataset.id = o.id;
+    el.style.left = o.x * 100 + '%';
+    el.style.top = o.y * 100 + '%';
+    el.style.width = o.w * 100 + '%';
+    el.style.height = o.h * 100 + '%';
+    if (o.type === 'image' && o.src) el.style.backgroundImage = `url("${urlFor(o.src)}")`;
+    el.textContent = label(o);
+    if (o.id === state.selected) {
+      for (const h of ['nw', 'ne', 'sw', 'se']) {
+        const d = document.createElement('span');
+        d.className = 'handle ' + h;
+        d.dataset.h = h;
+        el.append(d);
+      }
+    }
+    return el;
+  }));
+}
+
+function field(labelText, input) {
+  const l = document.createElement('label');
+  l.textContent = labelText;
+  l.htmlFor = input.id;
+  return [l, input];
+}
+
+function input(id, type, attrs = {}) {
+  return Object.assign(document.createElement('input'), { id, type, ...attrs });
+}
+
 function renderProps() {
-  props.innerHTML = '';
-  const hint = document.createElement('p');
-  hint.className = 'hint';
-  hint.textContent = state.book ? 'Drag on the page to draw a box, or click a box to edit it.' : 'Open a PDF to start.';
-  props.append(hint);
+  props.replaceChildren();
+  const o = state.book && !state.preview && selected();
+  if (!o) {
+    const hint = document.createElement('p');
+    hint.className = 'hint';
+    hint.textContent = !state.book ? 'Open a PDF to start.'
+      : state.preview ? 'Preview: overlays work as in the exported book.'
+      : 'Drag on the page to draw a box, or click a box to edit it.';
+    props.append(hint);
+    return;
+  }
+
+  const type = document.createElement('select');
+  type.id = 'p-type';
+  for (const [value, text] of [['', 'Choose…'], ['image', 'Image'], ['video', 'Video file'], ['embed', 'YouTube / Vimeo link'], ['link', 'Link']]) {
+    type.append(new Option(text, value));
+  }
+  type.value = o.type;
+  type.onchange = () => {
+    for (const k of Object.keys(o)) if (!['id', 'x', 'y', 'w', 'h'].includes(k)) delete o[k];
+    o.type = type.value;
+    changed();
+  };
+  props.append(...field('Type', type));
+
+  if (o.type === 'image' || o.type === 'video') {
+    const file = input('p-file', 'file', { accept: o.type === 'image' ? 'image/*' : 'video/mp4,video/webm' });
+    file.onchange = async () => {
+      const f = file.files[0];
+      if (!f) return;
+      const path = M.mediaName(o.id, f.name);
+      // Copy into memory so the box survives the source file being moved or rewritten.
+      setBlob(path, new Blob([await f.arrayBuffer()], { type: f.type }));
+      o.src = path;
+      changed();
+    };
+    props.append(...field(o.type === 'image' ? 'Image file' : 'Video file (MP4 or WebM)', file));
+    if (o.src) {
+      const cur = document.createElement('p');
+      cur.className = 'hint';
+      cur.textContent = 'Current: ' + o.src;
+      props.append(cur);
+    }
+  } else if (o.type === 'embed') {
+    const url = input('p-url', 'url', { placeholder: 'https://www.youtube.com/watch?v=…', value: o.url || '' });
+    url.onchange = () => { o.url = url.value.trim(); changed(); };
+    props.append(...field('Video address', url));
+  } else if (o.type === 'link') {
+    const href = input('p-href', 'url', { placeholder: 'https://…', value: o.href || '' });
+    href.onchange = () => {
+      const v = href.value.trim();
+      if (v) { o.href = v; delete o.page; } else delete o.href;
+      changed();
+    };
+    const pg = input('p-page', 'number', { min: 1, max: state.book.pages.length, value: o.page ?? '' });
+    pg.onchange = () => {
+      const n = parseInt(pg.value, 10);
+      if (Number.isNaN(n)) delete o.page; else { o.page = n; delete o.href; }
+      changed();
+    };
+    props.append(...field('Web address', href), ...field('…or go to page', pg));
+  }
+
+  const error = M.validateOverlay(o, state.book.pages.length);
+  if (error) {
+    const p = document.createElement('p');
+    p.className = 'error';
+    p.textContent = error;
+    props.append(p);
+  }
+
+  const del = document.createElement('button');
+  del.type = 'button';
+  del.textContent = 'Delete box';
+  del.onclick = deleteSelected;
+  props.append(del);
+}
+
+function deleteSelected() {
+  page().overlays = page().overlays.filter(o => o.id !== state.selected);
+  state.selected = null;
+  changed();
 }
 
 $('pdf-input').onchange = async e => {
@@ -109,5 +233,74 @@ $('pdf-input').onchange = async e => {
 
 $('title').oninput = e => { state.book.title = e.target.value; state.dirty = true; };
 addEventListener('beforeunload', e => { if (state.dirty) e.preventDefault(); });
+
+layer.addEventListener('pointerdown', e => {
+  if (!state.book || state.preview || e.button !== 0) return;
+  e.preventDefault();
+  const rect = layer.getBoundingClientRect();
+  const at = ev => ({ x: (ev.clientX - rect.left) / rect.width, y: (ev.clientY - rect.top) / rect.height });
+  const start = at(e);
+  const boxEl = e.target.closest('.box');
+  const handle = e.target.dataset.h;
+  let o, mode;
+  if (boxEl) {
+    o = page().overlays.find(x => x.id === boxEl.dataset.id);
+    mode = handle ? 'resize' : 'move';
+  } else {
+    o = { id: M.newId(), type: '', x: start.x, y: start.y, w: 0, h: 0 };
+    page().overlays.push(o);
+    mode = 'draw';
+  }
+  state.selected = o.id;
+  const orig = { x: o.x, y: o.y, w: o.w, h: o.h };
+  layer.setPointerCapture(e.pointerId);
+  renderLayer();
+
+  const onMove = ev => {
+    const p = at(ev), dx = p.x - start.x, dy = p.y - start.y;
+    let r;
+    if (mode === 'move') r = { ...orig, x: orig.x + dx, y: orig.y + dy };
+    else if (mode === 'draw') r = { x: Math.min(start.x, p.x), y: Math.min(start.y, p.y), w: Math.abs(dx), h: Math.abs(dy) };
+    else {
+      r = { ...orig };
+      if (handle.includes('w')) { r.x += dx; r.w -= dx; } else r.w += dx;
+      if (handle.includes('n')) { r.y += dy; r.h -= dy; } else r.h += dy;
+    }
+    Object.assign(o, M.clampRect(r));
+    state.dirty = true;
+    renderLayer();
+  };
+  const onUp = ev => {
+    layer.removeEventListener('pointermove', onMove);
+    layer.removeEventListener('pointerup', onUp);
+    layer.removeEventListener('pointercancel', onUp);
+    const p = at(ev);
+    // A click on the bare page (no real drag) deselects instead of leaving a tiny box.
+    if (mode === 'draw' && Math.abs(p.x - start.x) < 0.01 && Math.abs(p.y - start.y) < 0.01) {
+      page().overlays.pop();
+      state.selected = null;
+    }
+    renderLayer();
+    renderProps();
+  };
+  layer.addEventListener('pointermove', onMove);
+  layer.addEventListener('pointerup', onUp);
+  layer.addEventListener('pointercancel', onUp);
+});
+
+document.addEventListener('keydown', e => {
+  if ((e.key === 'Delete' || e.key === 'Backspace') && state.book && state.selected && !e.target.closest('input, select, textarea')) {
+    e.preventDefault();
+    deleteSelected();
+  }
+});
+
+$('preview').onclick = () => {
+  state.preview = !state.preview;
+  $('preview').setAttribute('aria-pressed', String(state.preview));
+  state.selected = null;
+  renderLayer();
+  renderProps();
+};
 
 renderProps();
