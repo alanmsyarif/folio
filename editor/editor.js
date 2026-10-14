@@ -43,6 +43,53 @@ function changed() {
   state.dirty = true;
   renderLayer();
   renderProps();
+  commit();
+}
+
+// Undo history: a snapshot of every page's boxes after each finished edit. Media files stay in
+// state.blobs when a box goes, so an undone box finds its image or video again.
+// ponytail: snapshots copy all boxes and keep the last 100; diff-based history if books get huge.
+// ponytail: replacing a box's file with another of the same name overwrites it, so undo can't bring the old file back.
+const history = { done: [], undone: [] };
+const snap = () => JSON.stringify(state.book.pages.map(p => p.overlays));
+
+function commit() {
+  const s = snap();
+  if (s === history.done.at(-1)) return; // nothing really changed (e.g. a click without a drag)
+  history.done.push(s);
+  if (history.done.length > 101) history.done.shift();
+  history.undone = [];
+  updateUndoButtons();
+}
+
+function restore(s) {
+  const all = JSON.parse(s);
+  // Show the page the step changed, so undo is never invisible.
+  const changedPage = all.findIndex((ovs, i) => JSON.stringify(ovs) !== JSON.stringify(state.book.pages[i].overlays));
+  state.book.pages.forEach((p, i) => { p.overlays = all[i]; });
+  if (changedPage !== -1) state.current = changedPage;
+  if (!page().overlays.some(o => o.id === state.selected)) state.selected = null;
+  state.dirty = true;
+  render();
+  updateUndoButtons();
+}
+
+function undo() {
+  if (state.preview || history.done.length < 2) return;
+  history.undone.push(history.done.pop());
+  restore(history.done.at(-1));
+}
+
+function redo() {
+  if (state.preview || !history.undone.length) return;
+  const s = history.undone.pop();
+  history.done.push(s);
+  restore(s);
+}
+
+function updateUndoButtons() {
+  $('undo').disabled = state.preview || history.done.length < 2;
+  $('redo').disabled = state.preview || !history.undone.length;
 }
 
 function load(book, blobs) {
@@ -53,6 +100,9 @@ function load(book, blobs) {
   $('title').value = book.title || '';
   for (const id of ['title', 'preview', 'export']) $(id).disabled = false;
   $('page').hidden = false;
+  history.done = [snap()];
+  history.undone = [];
+  updateUndoButtons();
   render();
 }
 
@@ -302,6 +352,7 @@ layer.addEventListener('pointerdown', e => {
     }
     renderLayer();
     renderProps();
+    commit();
   };
   layer.addEventListener('pointermove', onMove);
   layer.addEventListener('pointerup', onUp);
@@ -309,6 +360,12 @@ layer.addEventListener('pointerdown', e => {
 });
 
 document.addEventListener('keydown', e => {
+  // In text fields Ctrl+Z is the field's own text undo.
+  if ((e.ctrlKey || e.metaKey) && state.book && !e.target.closest('input, select, textarea')) {
+    const k = e.key.toLowerCase();
+    if (k === 'z' && !e.shiftKey) { e.preventDefault(); undo(); return; }
+    if ((k === 'z' && e.shiftKey) || k === 'y') { e.preventDefault(); redo(); return; }
+  }
   if ((e.key === 'Delete' || e.key === 'Backspace') && state.book && state.selected && !e.target.closest('input, select, textarea')) {
     e.preventDefault();
     deleteSelected();
@@ -321,7 +378,11 @@ $('preview').onclick = () => {
   state.selected = null;
   renderLayer();
   renderProps();
+  updateUndoButtons();
 };
+
+$('undo').onclick = undo;
+$('redo').onclick = redo;
 
 if (!('showDirectoryPicker' in window)) {
   for (const id of ['open-folder', 'export']) $(id).title = 'Needs Chrome, Edge or Opera';

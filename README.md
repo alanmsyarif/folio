@@ -20,6 +20,7 @@ Open http://127.0.0.1:8080/editor/ in Chrome, Edge or Opera (export needs the Fi
    view and loops; browsers only allow this muted, so readers unmute it from the player controls.
    Player controls stay hidden while a video plays and appear when the reader points at it.
 3. Drag a box to move it, drag its corners to resize, and press Delete to remove it.
+   **↶ / ↷** (Ctrl+Z, Ctrl+Shift+Z or Ctrl+Y) undo and redo box changes, on any page.
    **Preview** shows the boxes working.
 4. **Export…** and pick a folder. To keep editing later, use **Open book folder** on that same folder,
    then export again.
@@ -98,6 +99,7 @@ Vendored: pdf.js 6.4.299, page-flip 2.0.7 (see vendor/LICENSES.md).
 | PDF import bakes 320 px WebP thumbnails and page text | pass |
 | Viewer: pages near the reader load full size, the rest stay thumbnails; grid uses thumbnails | pass |
 | 40-page book: only the spread ±2–3 pages hold full images; far pages return to thumbnails after jumps | pass |
+| Editor undo / redo: draw, type, link target, move, delete across two pages undo in order and jump to the changed page; redo; a new edit clears redo; Ctrl+Z in the title field left alone; off in Preview | pass |
 | Phone size (390×844, touch emulated): no sideways scroll, slider row, ⋯ menu opens above the bar, tapping the book closes it, Pages / Search / Zoom open from it; desktop bar unchanged | pass |
 | Zoom: opens at 2× centred, 1×–4× limits, mouse drag pans, Esc closes, page keys ignored | pass |
 | Search: case / accent folding, counts, snippets, Enter and click jump to the page | pass |
