@@ -16,6 +16,7 @@
   <input id="title" placeholder="Book title" aria-label="Book title" disabled>
   <button id="preview" type="button" aria-pressed="false" disabled>Preview</button>
   <button id="export" type="button" disabled>Export…</button>
+  <button id="library" type="button" title="Make a page listing every book in a folder">Library…</button>
   <span id="status" role="status"></span>
 </header>
 <main>
@@ -25,6 +26,22 @@
   </section>
   <aside id="props"></aside>
 </main>
+<dialog id="lib-dialog" aria-labelledby="lib-title">
+  <form method="dialog">
+    <h2 id="lib-title">Build library</h2>
+    <p id="lib-found" class="hint"></p>
+    <label for="lib-name">Publisher name</label>
+    <input id="lib-name" required>
+    <label for="lib-intro">Introduction</label>
+    <textarea id="lib-intro" rows="3"></textarea>
+    <label for="lib-site">Website</label>
+    <input id="lib-site" type="url" placeholder="https://">
+    <div class="actions">
+      <button value="cancel" formnovalidate>Cancel</button>
+      <button value="build" class="primary">Build library</button>
+    </div>
+  </form>
+</dialog>
 <script src="../shared/model.js"></script>
 <script src="../shared/overlays.js"></script>
 <script type="module" src="editor.js"></script>

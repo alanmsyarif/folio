@@ -253,6 +253,35 @@ test('exportPlan counts cover.jpg among the files Export writes', () => {
   assert.match(plan.ask, /cover\.jpg/);
 });
 
+test('libraryEntry points at the book folder and prefers the issue date', () => {
+  const book = { title: ' Asia Dreams 59 ', series: 'Asia Dreams', published: '2026-09-01', description: 'Escapes',
+    pageWidth: 1000, pageHeight: 1414, pages: [{ image: 'pages/1.webp', thumb: 'pages/1-thumb.webp' }, { image: 'pages/2.webp' }] };
+  assert.deepEqual(M.libraryEntry('ad-59', book, Date.UTC(2026, 9, 14)), {
+    folder: 'ad-59', title: 'Asia Dreams 59', series: 'Asia Dreams', date: '2026-09-01', description: 'Escapes', pages: 2,
+    cover: 'pages/1-thumb.webp', image: 'pages/1.webp', ratio: 1000 / 1414 });
+  const plain = M.libraryEntry('x', { pages: [{ image: 'pages/1.webp' }] }, Date.UTC(2026, 9, 14));
+  assert.equal(plain.title, 'x');
+  assert.equal(plain.date, '2026-10-14');
+  assert.equal(plain.cover, 'pages/1.webp');
+});
+
+test('sortLibrary puts the newest first and undated books last; shelves follow the newest issue', () => {
+  const e = (title, series, date) => ({ title, series, date });
+  const sorted = M.sortLibrary([e('B1', 'Bali', '2025-01-01'), e('Loose', '', ''), e('A2', 'Asia', '2026-06-01'), e('B2', 'Bali', '2026-08-01'), e('A1', 'Asia', '2025-06-01')]);
+  assert.deepEqual(sorted.map(x => x.title), ['B2', 'A2', 'A1', 'B1', 'Loose']);
+  assert.deepEqual(M.shelves(sorted).map(s => [s.name, s.books.map(b => b.title)]),
+    [['Bali', ['B2', 'B1']], ['Asia', ['A2', 'A1']], ['More issues', ['Loose']]]);
+});
+
+test('library data round-trips and parseBookJs checks series and issue date', () => {
+  const lib = { name: 'Exquisite Media', intro: 'Hi', website: 'https://example.com', books: [] };
+  assert.deepEqual(M.parseLibraryJs(M.serializeLibrary(lib)), lib);
+  assert.throws(() => M.parseLibraryJs('alert(1)'), /Not a Folio library/);
+  const b = M.parseBookJs('window.BOOK = ' + JSON.stringify({ version: 1, series: 3, published: '14/10/2026', pages: [{ image: 'pages/1.webp', overlays: [] }] }) + ';');
+  assert.equal(b.series, undefined);
+  assert.equal(b.published, undefined);
+});
+
 test('fitRect centres a page of another shape inside the book page size', () => {
   assert.deepEqual(M.fitRect(2000, 1000, 1000, 1414), { x: 0, y: 457, w: 1000, h: 500 });
   assert.deepEqual(M.fitRect(500, 1000, 1000, 1414), { x: 147, y: 0, w: 707, h: 1414 });

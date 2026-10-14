@@ -2,7 +2,7 @@
 // Usage: npm run demo, then open demo/index.html (file://) or http://127.0.0.1:8080/demo/ via npm start.
 const fs = require('fs');
 const path = require('path');
-const { serializeBook, withPreview, VIEWER_FILES } = require('../shared/model.js');
+const { serializeBook, withPreview, VIEWER_FILES, LIBRARY_FILES, LIBRARY_DATA, libraryEntry, sortLibrary, serializeLibrary } = require('../shared/model.js');
 
 const root = path.join(__dirname, '..');
 const out = path.join(root, 'demo');
@@ -67,3 +67,33 @@ for (const [from, to] of VIEWER_FILES) fs.copyFileSync(path.join(root, from), pa
 fs.writeFileSync(path.join(out, 'index.html'), withPreview(fs.readFileSync(path.join(root, 'viewer/index.html'), 'utf8'), book));
 fs.writeFileSync(path.join(out, 'book.js'), serializeBook(book));
 console.log('Wrote ' + out);
+
+// demo-library/: the demo book copied under made-up titles, series and dates, plus the library page
+// the editor's Library… button would write next to them.
+const libOut = path.join(root, 'demo-library');
+fs.rmSync(libOut, { recursive: true, force: true });
+const issues = [
+  ['harbour-guide-12', 'Harbour Guide 12', 'Harbour Guide', '2026-09-01', 'Autumn on the quay: ferries, cliff walks and the new fish market.'],
+  ['harbour-guide-11', 'Harbour Guide 11', 'Harbour Guide', '2026-06-01', ''],
+  ['harbour-guide-10', 'Harbour Guide 10', 'Harbour Guide', '2026-03-01', ''],
+  ['harbour-guide-9', 'Harbour Guide 9', 'Harbour Guide', '2025-12-01', ''],
+  ['harbour-guide-8', 'Harbour Guide 8', 'Harbour Guide', '2025-09-01', ''],
+  ['harbour-guide-7', 'Harbour Guide 7', 'Harbour Guide', '2025-06-01', ''],
+  ['harbour-guide-6', 'Harbour Guide 6', 'Harbour Guide', '2025-03-01', ''],
+  ['island-table-4', 'Island Table 4', 'Island Table', '2026-08-15', 'Twelve kitchens worth the boat ride.'],
+  ['island-table-3', 'Island Table 3', 'Island Table', '2026-02-15', ''],
+  ['Lighthouse Special', 'The Lighthouse Special', '', '2026-07-01', 'A one-off issue on the lamp and its keepers.'],
+];
+const entries = issues.map(([folder, title, series, published, description]) => {
+  const dir = path.join(libOut, folder);
+  fs.cpSync(out, dir, { recursive: true });
+  const b = { ...book, title, series, published, description, url: undefined };
+  fs.writeFileSync(path.join(dir, 'book.js'), serializeBook(b));
+  fs.writeFileSync(path.join(dir, 'index.html'), withPreview(fs.readFileSync(path.join(root, 'viewer/index.html'), 'utf8'), b));
+  return libraryEntry(folder, b, 0);
+});
+const lib = { name: 'Harbour Press', intro: 'Travel and food magazines from the harbour town, every season since 2019.', website: 'https://example.com/', books: sortLibrary(entries) };
+for (const [from, to] of LIBRARY_FILES) fs.copyFileSync(path.join(root, from), path.join(libOut, to));
+fs.writeFileSync(path.join(libOut, 'index.html'), withPreview(fs.readFileSync(path.join(root, 'library/index.html'), 'utf8'), { title: lib.name, description: lib.intro }));
+fs.writeFileSync(path.join(libOut, LIBRARY_DATA), serializeLibrary(lib));
+console.log('Wrote ' + libOut);

@@ -270,7 +270,8 @@
       if (p.text !== undefined && typeof p.text !== 'string') delete p.text; // search text is optional
     }
     // Optional book fields: keep the well-formed parts, drop the rest.
-    for (const k of ['description', 'url']) if (book[k] !== undefined && typeof book[k] !== 'string') delete book[k];
+    for (const k of ['description', 'url', 'series']) if (book[k] !== undefined && typeof book[k] !== 'string') delete book[k];
+    if (book.published !== undefined && !/^\d{4}-\d{2}-\d{2}$/.test(book.published)) delete book.published;
     if (book.contents !== undefined) {
       book.contents = Array.isArray(book.contents)
         ? book.contents.filter(e => e && typeof e.title === 'string' && Number.isInteger(e.page) && e.page >= 1 && e.page <= book.pages.length)
@@ -280,10 +281,69 @@
     return book;
   }
 
+  // Library: one page listing the books exported into sub-folders of one folder.
+  const LIBRARY_FILES = [
+    ['library/index.html', 'index.html'],
+    ['library/library.css', 'library.css'],
+    ['library/library.js', 'library.js'],
+    ['vendor/bodoni-moda-latin-400.woff2', 'bodoni-moda-latin-400.woff2'],
+  ];
+  const LIBRARY_DATA = 'library-data.js';
+
+  // What the library needs from one book folder. modified = when its book.js was written (ms), the
+  // fallback order for books without an issue date.
+  function libraryEntry(folder, book, modified) {
+    const first = book.pages[0] || {};
+    const iso = book.published || (modified ? new Date(modified).toISOString().slice(0, 10) : '');
+    return {
+      folder,
+      title: (book.title || '').trim() || folder,
+      series: (book.series || '').trim(),
+      date: iso,
+      description: (book.description || '').trim(),
+      pages: book.pages.length,
+      cover: first.thumb || first.image || '', // relative to the book folder
+      image: first.image || '',
+      ratio: book.pageWidth && book.pageHeight ? book.pageWidth / book.pageHeight : 0.7,
+    };
+  }
+
+  // Newest first; books without a date go last, by title.
+  function sortLibrary(entries) {
+    return [...entries].sort((a, b) => (b.date || '').localeCompare(a.date || '') || a.title.localeCompare(b.title));
+  }
+
+  // Shelves by series, in order of each series' newest issue; books with no series share a last shelf.
+  function shelves(sorted, otherName = 'More issues') {
+    const map = new Map();
+    for (const e of sorted) {
+      const key = e.series || '';
+      if (!map.has(key)) map.set(key, []);
+      map.get(key).push(e);
+    }
+    const out = [...map].filter(([k]) => k).map(([name, books]) => ({ name, books }));
+    if (map.has('')) out.push({ name: otherName, books: map.get('') });
+    return out;
+  }
+
+  function serializeLibrary(lib) {
+    return 'window.LIBRARY = ' + JSON.stringify(lib, null, 1) + ';\n';
+  }
+
+  function parseLibraryJs(text) {
+    const m = String(text).match(/^\s*window\.LIBRARY\s*=\s*([\s\S]*?)\s*;?\s*$/);
+    if (!m) throw new Error('Not a Folio library');
+    let lib;
+    try { lib = JSON.parse(m[1]); } catch { throw new Error('Not a Folio library'); }
+    if (!lib || !Array.isArray(lib.books)) throw new Error('Not a Folio library');
+    return lib;
+  }
+
   const api = {
     VIEWER_FILES, toEmbedUrl, isSafeHref, clampRect, validateOverlay, firstInvalid,
     newId, mediaName, isLocalPath, usedPaths, exportPlan, visiblePages, pageFromHash, searchPages, fitRect, bookUrl, previewHead, withPreview, embedCode,
     parseContents, formatContents, COVER, serializeBook, parseBookJs,
+    LIBRARY_FILES, LIBRARY_DATA, libraryEntry, sortLibrary, shelves, serializeLibrary, parseLibraryJs,
   };
   root.FolioModel = api;
   if (typeof module === 'object' && module.exports) module.exports = api;

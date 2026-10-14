@@ -24,6 +24,7 @@ Open http://127.0.0.1:8080/editor/ in Chrome, Edge or Opera (export needs the Fi
    **↶ / ↷** (Ctrl+Z, Ctrl+Shift+Z or Ctrl+Y) undo and redo box changes, on any page.
    **Preview** shows the boxes working.
 4. With no box selected, the right panel shows the **Book** settings:
+   - **Series** and **Issue date**: how the library groups and orders the book.
    - **Description**: one or two sentences shown when the link is shared.
    - **Web address**: where the exported folder will be online. Shared links on Facebook, WhatsApp,
      LinkedIn and X then show the cover, and **Embed on a website** gives an `<iframe>` to paste
@@ -58,6 +59,20 @@ The address follows the page (`index.html#p=12`), so a reload or a shared link o
 Each page loads as a thumbnail first; the full page loads when the reader gets near it and drops
 back to the thumbnail once they're far away, so long books stay light on memory.
 
+## Library
+
+One page listing every issue, like a publisher's shelf. Export each book into its own folder inside
+one parent folder (for example `books/asia-dreams-59/`, `books/taste-52/`), then click **Library…**
+in the editor and pick the parent folder. Fill in the publisher name, introduction and website, and
+**Build library**. It writes `index.html` (plus `library.css`, `library.js`, `library-data.js` and
+the font) next to the book folders:
+
+- the newest issue, readable right on the page, with the next three beside it;
+- one shelf per series, newest first (books without a series share a last shelf), scrolling
+  sideways with **Show all** for the full grid.
+
+Build it again after exporting a new issue. The publisher details are remembered.
+
 ## Share
 
 Upload the exported folder to any static host (GitHub Pages, Netlify, your own server) or open its
@@ -73,7 +88,7 @@ over http(s). For offline books, use a video file instead.
 ## Develop
 
     npm test       # model unit tests
-    npm run demo   # writes demo/, a 6-page sample book for checking the viewer
+    npm run demo   # writes demo/ (a 6-page sample book) and demo-library/ (ten copies on a library page)
 
 Vendored: pdf.js 6.4.299, page-flip 2.0.7, Bodoni Moda 5.3.0 font (see vendor/LICENSES.md).
 
@@ -115,6 +130,8 @@ Vendored: pdf.js 6.4.299, page-flip 2.0.7, Bodoni Moda 5.3.0 font (see vendor/LI
 | Editor undo / redo: draw, type, link target, move, delete across two pages undo in order and jump to the changed page; redo; a new edit clears redo; Ctrl+Z in the title field left alone; off in Preview | pass |
 | Contents: PDF bookmarks import as entries; bad lines flagged; reader list jumps to the page | pass |
 | Export writes title, description and link-preview tags into index.html (escaped) and a 1200×630 cover.jpg; embed code appears once the web address is valid | pass (browser-private storage stand-in for the folder picker) |
+| Library page (http and file://): newest issue plays in place, next three beside it, a shelf per series in date order, arrows and Show all only on long shelves, folder names with spaces, no sideways scroll on phones | pass |
+| Library… in the editor: refuses a book folder, skips an unreadable book.js and names it, writes page and data, escapes the title, pre-fills on rebuild | pass (browser-private storage stand-in for the folder picker) |
 | Phone size (390×844, touch emulated): no sideways scroll, slider row, ⋯ menu opens above the bar, tapping the book closes it, Pages / Search / Zoom open from it; desktop bar unchanged | pass |
 | Zoom: opens at 2× centred, 1×–4× limits, mouse drag pans, Esc closes, page keys ignored | pass |
 | Search: case / accent folding, counts, snippets, Enter and click jump to the page | pass |

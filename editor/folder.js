@@ -76,6 +76,39 @@ export async function exportBook(book, blobs) {
   return root.name;
 }
 
+// Reads every sub-folder that holds an exported book. Returns what writeLibrary needs; writes nothing.
+export async function scanLibrary() {
+  const root = await window.showDirectoryPicker({ id: 'folio-library', mode: 'readwrite' });
+  const names = await entryNames(root, 'file');
+  if (names.includes('book.js')) throw new Error(`"${root.name}" is a book. Pick the folder that holds your book folders.`);
+  const books = [], skipped = [];
+  for await (const [name, handle] of root.entries()) {
+    if (handle.kind !== 'directory') continue;
+    let file;
+    try { file = await (await handle.getFileHandle('book.js')).getFile(); } catch { continue; } // not a book
+    try { books.push(M.libraryEntry(name, M.parseBookJs(await file.text()), file.lastModified)); } catch { skipped.push(name); }
+  }
+  let existing = null;
+  if (names.includes(M.LIBRARY_DATA)) {
+    try { existing = M.parseLibraryJs(await (await (await root.getFileHandle(M.LIBRARY_DATA)).getFile()).text()); } catch { /* rebuilt below */ }
+  }
+  return { root, folder: root.name, books: M.sortLibrary(books), skipped, existing, foreignIndex: names.includes('index.html') && !existing };
+}
+
+// Writes the library page and its data next to the book folders. Returns false if the user declined.
+export async function writeLibrary(scan, info) {
+  const template = await Promise.all(M.LIBRARY_FILES.map(async ([from, to]) => {
+    const res = await fetch('../' + from);
+    if (!res.ok) throw new Error('Library file missing: ' + from);
+    if (to === 'index.html') return [to, new Blob([M.withPreview(await res.text(), { title: info.name || 'Library', description: info.intro })], { type: 'text/html' })];
+    return [to, await res.blob()];
+  }));
+  if (scan.foreignIndex && !confirm(`"${scan.folder}" already has an index.html that isn't a Folio library. Replace it?`)) return false;
+  for (const [to, blob] of template) await writeFile(scan.root, to, blob);
+  await writeFile(scan.root, M.LIBRARY_DATA, M.serializeLibrary({ ...info, books: scan.books }));
+  return true;
+}
+
 export async function openBook() {
   const root = await window.showDirectoryPicker({ id: 'folio', mode: 'read' });
   let text;

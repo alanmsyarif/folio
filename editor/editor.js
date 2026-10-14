@@ -1,6 +1,6 @@
 // Folio editor: import a PDF as page images, draw overlay boxes, export a static flipbook folder.
 import { pdfToPages } from './pdf-import.js';
-import { exportBook, openBook } from './folder.js';
+import { exportBook, openBook, scanLibrary, writeLibrary } from './folder.js';
 
 const M = window.FolioModel;
 const $ = id => document.getElementById(id);
@@ -321,7 +321,14 @@ function renderBookSettings() {
   };
   showToc([]);
 
+  const series = input('b-series', 'text', { placeholder: 'e.g. Asia Dreams', value: b.series || '' });
+  series.onchange = () => set('series', series.value.trim());
+  const date = input('b-date', 'date', { value: b.published || '' });
+  date.onchange = () => set('published', date.value);
+
   props.append(head,
+    ...field('Series', series),
+    ...field('Issue date', date),
     ...field('Description', desc),
     ...field('Web address', url), urlNote,
     ...field('Embed on a website', embed), copy,
@@ -445,8 +452,8 @@ $('undo').onclick = undo;
 $('redo').onclick = redo;
 
 if (!('showDirectoryPicker' in window)) {
-  for (const id of ['open-folder', 'export']) $(id).title = 'Needs Chrome, Edge or Opera';
-  $('open-folder').disabled = true;
+  for (const id of ['open-folder', 'export', 'library']) $(id).title = 'Needs Chrome, Edge or Opera';
+  $('open-folder').disabled = $('library').disabled = true;
   status('Export and Open folder need a Chromium browser (Chrome, Edge, Opera).', true);
 }
 
@@ -478,6 +485,34 @@ $('open-folder').onclick = async () => {
     status(`Opened "${book.title}"`);
   } catch (err) {
     if (err.name !== 'AbortError') status(err.message, true);
+  }
+};
+
+// Library: pick the folder holding exported books, confirm the publisher details, write the page.
+$('library').onclick = async () => {
+  let scan;
+  try {
+    scan = await scanLibrary();
+  } catch (err) {
+    if (err.name !== 'AbortError') status(err.message, true);
+    return;
+  }
+  const n = scan.books.length;
+  $('lib-found').textContent = (n ? `${n} book${n === 1 ? '' : 's'} found in "${scan.folder}".` : `No exported books in "${scan.folder}" yet; the page will say so.`)
+    + (scan.skipped.length ? ` Skipped (unreadable book.js): ${scan.skipped.join(', ')}.` : '');
+  $('lib-name').value = scan.existing?.name || '';
+  $('lib-intro').value = scan.existing?.intro || '';
+  $('lib-site').value = scan.existing?.website || '';
+  const dialog = $('lib-dialog');
+  dialog.returnValue = '';
+  dialog.showModal();
+  await new Promise(r => dialog.addEventListener('close', r, { once: true }));
+  if (dialog.returnValue !== 'build') return;
+  try {
+    const done = await writeLibrary(scan, { name: $('lib-name').value.trim(), intro: $('lib-intro').value.trim(), website: $('lib-site').value.trim() });
+    if (done) status(`Library written to "${scan.folder}" with ${n} book${n === 1 ? '' : 's'}. Open its index.html.`);
+  } catch (err) {
+    status('Library failed: ' + err.message, true);
   }
 };
 

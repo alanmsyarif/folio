@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Flipbook</title>
+<link rel="stylesheet" href="library.css">
+</head>
+<body>
+<header id="masthead">
+  <h1 id="name"></h1>
+  <p id="intro"></p>
+  <p id="meta"><a id="website" rel="noopener"></a><span id="count"></span></p>
+</header>
+<main>
+  <section id="latest" aria-labelledby="latest-title" hidden>
+    <div id="latest-reader"></div>
+    <div id="latest-text">
+      <h2 id="latest-title"></h2>
+      <p id="latest-date" class="date"></p>
+      <p id="latest-desc"></p>
+      <a id="latest-open" class="open">Open full screen</a>
+      <ul id="also-new" aria-label="Also new"></ul>
+    </div>
+  </section>
+  <div id="shelves"></div>
+  <p id="empty" hidden>No books here yet. Export books into folders inside this one, then build the library again from the editor.</p>
+</main>
+<script src="library-data.js"></script>
+<script src="library.js"></script>
+</body>
+</html>

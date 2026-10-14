@@ -91,3 +91,12 @@ main { flex: 1; min-height: 0; display: grid; grid-template-columns: 132px 1fr 2
 #props .hint.error { color: var(--proof); }
 #b-contents + .hint, #b-url + .hint { margin-top: 4px; font-size: 12px; }
 #props textarea[hidden], #props button[hidden] { display: none; }
+#lib-dialog { width: min(440px, 92vw); padding: 20px 24px; border: 0; border-radius: 4px; background: var(--paper); color: var(--ink); box-shadow: 0 20px 50px rgb(0 0 0 / .3); }
+#lib-dialog::backdrop { background: rgb(38 35 31 / .45); }
+#lib-dialog h2 { margin: 0 0 6px; font-size: 18px; }
+#lib-dialog label { display: block; margin: 14px 0 4px; font-weight: 600; font-size: 13px; }
+#lib-dialog input, #lib-dialog textarea { width: 100%; font: inherit; padding: 7px 8px; border: 1px solid var(--rule); border-radius: 3px; background: #fff; color: var(--ink); }
+#lib-dialog .hint { margin: 0; color: var(--ink-dim); overflow-wrap: anywhere; }
+#lib-dialog .actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px; }
+#lib-dialog button { font: inherit; padding: 6px 14px; border: 1px solid var(--rule); border-radius: 3px; background: #fff; color: var(--ink); cursor: pointer; }
+#lib-dialog button.primary { background: var(--ink); border-color: var(--ink); color: var(--paper); }

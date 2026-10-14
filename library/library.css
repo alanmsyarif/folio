@@ -1,0 +1,97 @@
+/* Library: the same evening-lobby palette as the reader, so the shelf and the books read as one
+   place. The masthead is set like a magazine nameplate; covers carry the colour. */
+@font-face {
+  font-family: "Folio Didone";
+  src: url("bodoni-moda-latin-400.woff2") format("woff2");
+  font-weight: 400;
+  font-display: swap;
+}
+:root {
+  --surface: #221e1a;
+  --surface-lit: #342d26;
+  --panel: #2b2621;
+  --line: #4a4038;
+  --ivory: #ede6d8;
+  --ivory-dim: #a89e8f;
+  --gold: #b5985a;
+  --gold-bright: #d4b878;
+  --serif: "Folio Didone", Didot, "Bodoni 72", "Bodoni MT", Georgia, serif;
+  --sans: "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+  --gutter: clamp(16px, 4vw, 56px);
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; } /* sections below set display, which would beat the attribute */
+html { background: var(--surface); }
+body {
+  margin: 0; min-height: 100vh;
+  background: radial-gradient(ellipse 90% 50% at 50% 0, var(--surface-lit), var(--surface) 70%) no-repeat var(--surface);
+  color: var(--ivory); font: 16px/1.5 var(--sans);
+}
+a { color: inherit; }
+:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
+
+/* Masthead: the publisher's name as a nameplate, a gold rule beneath. */
+#masthead { padding: clamp(40px, 8vw, 88px) var(--gutter) 28px; text-align: center; }
+#name { margin: 0; font: 400 clamp(44px, 8vw, 96px)/1 var(--serif); letter-spacing: -.01em; }
+#intro { max-width: 60ch; margin: 18px auto 0; color: var(--ivory-dim); }
+#meta { display: flex; justify-content: center; flex-wrap: wrap; gap: 4px 20px; margin: 20px auto 0; padding-top: 16px; max-width: 520px; border-top: 1px solid var(--gold); color: var(--ivory-dim); font-size: 14px; }
+#website { text-decoration: none; border-bottom: 1px solid transparent; }
+#website:hover { color: var(--ivory); border-bottom-color: var(--gold); }
+
+main { padding: 0 var(--gutter) 80px; max-width: 1400px; margin: 0 auto; }
+h2 { margin: 0; font: 400 30px/1.15 var(--serif); }
+.date { color: var(--ivory-dim); font-size: 14px; }
+
+/* Latest: the newest issue playing in place, its details and the next few issues beside it. */
+#latest { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 40px; align-items: start; padding: 24px 0 56px; border-bottom: 1px solid var(--line); }
+#latest-reader { aspect-ratio: calc(var(--spread, 1.4)) / 1; max-height: 78vh; width: 100%; background: #1a1714; }
+#latest-reader iframe { display: block; width: 100%; height: 100%; border: 0; }
+#latest-text h2 { font-size: 36px; }
+#latest-date { margin: 8px 0 0; }
+#latest-desc { margin: 14px 0 0; color: var(--ivory-dim); max-width: 46ch; }
+.open { display: inline-block; margin-top: 18px; padding: 10px 18px; border: 1px solid var(--gold); border-radius: 3px; text-decoration: none; color: var(--gold-bright); }
+.open:hover { background: rgb(181 152 90 / .12); }
+#also-new { list-style: none; margin: 32px 0 0; padding: 20px 0 0; border-top: 1px solid var(--line); display: grid; gap: 14px; }
+#also-new .card { display: grid; grid-template-columns: 72px 1fr; grid-template-rows: auto 1fr; column-gap: 14px; align-items: start; }
+#also-new img { grid-row: span 2; width: 72px; }
+#also-new .title { font-size: 15px; }
+
+/* Shelves */
+.shelf { padding: 40px 0 8px; }
+.shelf + .shelf { border-top: 1px solid var(--line); }
+.shelf-head { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
+.shelf-head .n { margin-left: 14px; font: 14px var(--sans); color: var(--ivory-dim); }
+.controls { display: flex; gap: 6px; }
+.controls button { min-width: 40px; min-height: 36px; padding: 0 12px; border: 1px solid var(--line); border-radius: 3px; background: none; color: var(--ivory); font: inherit; font-size: 14px; cursor: pointer; }
+.controls button:hover:not(:disabled) { border-color: var(--gold); }
+.controls button:disabled { opacity: .3; cursor: default; }
+.controls .arrow { font: 22px/1 var(--serif); }
+
+.row { list-style: none; margin: 0; padding: 0 0 12px; display: grid; grid-auto-flow: column; grid-auto-columns: 168px; gap: 24px; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: thin; scrollbar-color: var(--line) transparent; }
+.row > li { scroll-snap-align: start; }
+.shelf.open .row { grid-auto-flow: row; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); overflow: visible; }
+
+.card { display: grid; gap: 4px; text-decoration: none; }
+.card img { width: 100%; height: auto; object-fit: cover; background: #3a332c; box-shadow: 0 10px 24px rgb(0 0 0 / .35); transition: transform .2s ease; }
+.card .title { margin-top: 8px; line-height: 1.3; }
+.card:hover img { transform: translateY(-3px); }
+.card:hover .title { color: var(--gold-bright); }
+
+#empty { max-width: 46ch; margin: 40px auto; text-align: center; color: var(--ivory-dim); }
+
+@media (max-width: 900px) {
+  #latest { grid-template-columns: 1fr; gap: 24px; }
+  #latest-reader { aspect-ratio: auto; height: min(70vh, 560px); }
+  #also-new { grid-template-columns: repeat(3, 1fr); }
+  #also-new .card { grid-template-columns: 1fr; }
+  #also-new img { grid-row: auto; width: 100%; }
+}
+@media (max-width: 560px) {
+  .row { grid-auto-columns: 132px; gap: 16px; }
+  .controls .arrow { display: none; } /* swipe instead */
+  #latest-text h2 { font-size: 30px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .card img { transition: none; }
+}
