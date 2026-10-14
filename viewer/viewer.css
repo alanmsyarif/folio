@@ -42,3 +42,16 @@ body { display: flex; flex-direction: column; background: #2e2e2e; color: #eee; 
 #fresults button { width: 100%; text-align: left; padding: 10px 12px; display: grid; gap: 4px; }
 #fresults button:hover, #fresults button:focus-visible { background: #4a4a4a; }
 #fresults mark { background: #f5c542; color: #000; border-radius: 2px; }
+/* Wide: the tools sit in the bar like any other buttons, and ⋯ is hidden. Narrow: ⋯ opens them as a
+   menu above the bar (#tools is a native popover, so tapping outside closes it). */
+#tools { display: flex; gap: 8px; position: static; inset: auto; margin: 0; padding: 0; border: 0; background: none; color: inherit; overflow: visible; }
+#more { display: none; }
+@media (max-width: 720px) {
+  #bar { gap: 6px; padding: 6px 16px 10px; }
+  #seek { flex-basis: 100%; max-width: none; order: -1; } /* full-width row above the buttons */
+  #first, #last { display: none; } /* the slider and Home / End reach the ends */
+  #more { display: inline-block; }
+  #tools:not(:popover-open) { display: none; }
+  #tools:popover-open { position: fixed; inset: auto 16px 88px auto; /* clears the two-row bar (78px) */ flex-direction: column; padding: 8px; border-radius: 10px; background: #2e2e2e; box-shadow: 0 6px 24px rgb(0 0 0 / .5); }
+  #tools button { text-align: left; padding: 8px 14px; }
+}

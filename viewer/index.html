@@ -16,11 +16,15 @@
   <button id="next" type="button" aria-label="Next page">›</button>
   <button id="last" type="button" aria-label="Last page">»</button>
   <input id="seek" type="range" min="1" aria-label="Go to page">
-  <button id="grid" type="button">Pages</button>
-  <button id="zoom" type="button">Zoom</button>
-  <button id="find" type="button" hidden>Search</button>
-  <button id="share" type="button" hidden>Share</button>
-  <button id="full" type="button">Fullscreen</button>
+  <!-- Inline on wide screens; on narrow ones a menu behind ⋯ (see viewer.css). -->
+  <div id="tools" popover>
+    <button id="grid" type="button">Pages</button>
+    <button id="zoom" type="button">Zoom</button>
+    <button id="find" type="button" hidden>Search</button>
+    <button id="share" type="button" hidden>Share</button>
+    <button id="full" type="button">Fullscreen</button>
+  </div>
+  <button id="more" type="button" popovertarget="tools" aria-label="More controls">⋯</button>
 </nav>
 <dialog id="thumbs" aria-label="All pages">
   <form method="dialog"><button id="thumbs-close">Close</button></form>

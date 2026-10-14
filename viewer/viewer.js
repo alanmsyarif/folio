@@ -215,6 +215,13 @@
   const full = document.getElementById('full');
   if (!document.fullscreenEnabled) full.hidden = true;
   full.onclick = () => (document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen());
+  // A choice in the ⋯ menu closes it (Pages, Search and Zoom also close it by opening their dialog).
+  const tools = document.getElementById('tools');
+  tools.addEventListener('click', e => { if (e.target.closest('button') && tools.matches(':popover-open')) tools.hidePopover(); });
+  // The popover's own tap-outside-to-close misses taps on the book (page-flip takes the touch), so close it here.
+  document.addEventListener('pointerdown', e => {
+    if (tools.matches(':popover-open') && !e.target.closest('#tools, #more')) tools.hidePopover();
+  }, true);
   document.addEventListener('keydown', e => {
     if (e.target instanceof HTMLInputElement || thumbs.open || zoomer.open || finder.open) return; // arrows belong to the number box and slider
     if (e.key === 'Home') goTo(1);

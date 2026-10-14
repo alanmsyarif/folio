@@ -41,6 +41,9 @@ arrow keys. The bar also has:
 - **Share**: the system share sheet, or copies the link. Hidden when the book is opened from disk.
 - **Fullscreen**.
 
+On narrow screens (phones) the slider gets its own row, « » are dropped (the slider reaches the ends),
+and Pages, Zoom, Search, Share and Fullscreen move into a **⋯** menu.
+
 The address follows the page (`index.html#p=12`), so a reload or a shared link opens that page.
 Each page loads as a thumbnail first; the full page loads when the reader gets near it and drops
 back to the thumbnail once they're far away, so long books stay light on memory.
@@ -95,6 +98,7 @@ Vendored: pdf.js 6.4.299, page-flip 2.0.7 (see vendor/LICENSES.md).
 | PDF import bakes 320 px WebP thumbnails and page text | pass |
 | Viewer: pages near the reader load full size, the rest stay thumbnails; grid uses thumbnails | pass |
 | 40-page book: only the spread ±2–3 pages hold full images; far pages return to thumbnails after jumps | pass |
+| Phone size (390×844, touch emulated): no sideways scroll, slider row, ⋯ menu opens above the bar, tapping the book closes it, Pages / Search / Zoom open from it; desktop bar unchanged | pass |
 | Zoom: opens at 2× centred, 1×–4× limits, mouse drag pans, Esc closes, page keys ignored | pass |
 | Search: case / accent folding, counts, snippets, Enter and click jump to the page | pass |
 
