@@ -151,6 +151,13 @@ test('pageFromHash reads #p=N and clamps it to the book', () => {
   assert.equal(M.pageFromHash('#p=2x', 6), 0);
 });
 
+test('usedPaths and parseBookJs carry page thumbnails', () => {
+  const b = { version: 1, pages: [{ image: 'pages/1.webp', thumb: 'pages/1-thumb.webp', overlays: [] }] };
+  assert.deepEqual([...M.usedPaths(b)].sort(), ['pages/1-thumb.webp', 'pages/1.webp']);
+  assert.deepEqual(M.parseBookJs(M.serializeBook(b)), b);
+  assert.throws(() => M.parseBookJs('window.BOOK = {"version":1,"pages":[{"image":"pages/1.webp","thumb":"../t.webp","overlays":[]}]};'), /thumbnail/);
+});
+
 test('fitRect centres a page of another shape inside the book page size', () => {
   assert.deepEqual(M.fitRect(2000, 1000, 1000, 1414), { x: 0, y: 457, w: 1000, h: 500 });
   assert.deepEqual(M.fitRect(500, 1000, 1000, 1414), { x: 147, y: 0, w: 707, h: 1414 });

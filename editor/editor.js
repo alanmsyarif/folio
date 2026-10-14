@@ -70,7 +70,7 @@ function renderThumbs() {
     b.setAttribute('aria-label', 'Page ' + (i + 1));
     if (i === state.current) b.setAttribute('aria-current', 'page');
     const img = document.createElement('img');
-    img.src = urlFor(p.image);
+    img.src = urlFor(p.thumb || p.image);
     img.alt = '';
     b.append(img, String(i + 1));
     b.onclick = () => { state.current = i; state.selected = null; render(); };
@@ -231,14 +231,15 @@ $('pdf-input').onchange = async e => {
   if (!file) return;
   if (state.dirty && !confirm('Replace the current book? Unsaved boxes will be lost.')) return;
   try {
-    const { blobs, width, height } = await pdfToPages(file, (n, total) => status(`Rendering page ${n} of ${total}…`));
+    const { blobs, thumbs, width, height } = await pdfToPages(file, (n, total) => status(`Rendering page ${n} of ${total}…`));
     const map = new Map(blobs.map((b, i) => [`pages/${i + 1}.webp`, b]));
+    thumbs.forEach((b, i) => map.set(`pages/${i + 1}-thumb.webp`, b));
     load({
       version: 1,
       title: file.name.replace(/\.pdf$/i, ''),
       pageWidth: width,
       pageHeight: height,
-      pages: blobs.map((_, i) => ({ image: `pages/${i + 1}.webp`, overlays: [] })),
+      pages: blobs.map((_, i) => ({ image: `pages/${i + 1}.webp`, thumb: `pages/${i + 1}-thumb.webp`, overlays: [] })),
     }, map);
     state.dirty = true;
     status(`${blobs.length} pages ready`);

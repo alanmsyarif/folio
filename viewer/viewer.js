@@ -15,7 +15,9 @@
     el.className = 'page';
     const img = document.createElement('img');
     img.className = 'fo-page';
-    img.src = p.image;
+    // Start on the small thumbnail; loadNear() swaps in the full page once the reader is close.
+    img.src = p.thumb || p.image;
+    if (p.thumb) img.dataset.full = p.image;
     img.alt = 'Page ' + (i + 1);
     img.draggable = false;
     const layer = document.createElement('div');
@@ -63,9 +65,18 @@
   flip.on('changeState', e => { if (e.data === 'flipping') bookEl.style.transform = ''; });
   addEventListener('resize', () => centre());
 
+  // ponytail: full pages are loaded, never unloaded; drop far ones if huge books run out of memory.
+  function loadNear(i) {
+    for (let k = i - 2; k <= i + 3; k++) {
+      const img = pageEls[k]?.querySelector('img.fo-page');
+      if (img?.dataset.full) { img.src = img.dataset.full; delete img.dataset.full; }
+    }
+  }
+
   let visible = [];
   function onPageChange() {
     const i = flip.getCurrentPageIndex();
+    loadNear(i);
     seek.value = i + 1;
     history.replaceState(null, '', '#p=' + (i + 1)); // replace, so turning pages doesn't fill Back history
     // Pages leaving the screen stop their media; pages arriving start their autoplay media.
@@ -114,7 +125,6 @@
   };
   seek.oninput = () => goTo(seek.valueAsNumber);
 
-  // ponytail: thumbnails reuse the full page images (lazy-loaded); bake small copies on export if big books load slowly.
   const thumbs = document.getElementById('thumbs');
   const list = document.getElementById('thumb-list');
   list.style.setProperty('--ratio', B.pageWidth + ' / ' + B.pageHeight);
@@ -122,7 +132,7 @@
     const b = document.createElement('button');
     b.type = 'button';
     b.innerHTML = '<img loading="lazy" alt=""><span></span>';
-    b.firstChild.src = p.image;
+    b.firstChild.src = p.thumb || p.image;
     b.lastChild.textContent = i + 1;
     b.onclick = () => { thumbs.close(); goTo(i + 1); };
     list.append(b);

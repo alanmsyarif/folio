@@ -97,6 +97,7 @@
     const used = new Set();
     for (const page of book.pages) {
       if (isLocalPath(page.image)) used.add(page.image);
+      if (isLocalPath(page.thumb)) used.add(page.thumb);
       for (const o of page.overlays) if (isLocalPath(o.src)) used.add(o.src);
     }
     return used;
@@ -158,6 +159,7 @@
     if (!book || book.version !== 1 || !Array.isArray(book.pages)) throw new Error('Unsupported book.js version');
     for (const p of book.pages) {
       if (!/^pages\/[^/\\]+$/.test(p.image || '') || p.image.includes('..')) throw new Error('Bad page image path: ' + p.image);
+      if (p.thumb !== undefined && (!/^pages\/[^/\\]+$/.test(p.thumb) || p.thumb.includes('..'))) throw new Error('Bad page thumbnail path: ' + p.thumb);
       if (!Array.isArray(p.overlays)) p.overlays = [];
     }
     return book;

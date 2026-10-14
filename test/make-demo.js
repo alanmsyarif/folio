@@ -16,7 +16,12 @@ for (let i = 1; i <= 6; i++) {
     `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}">` +
     `<rect width="100%" height="100%" fill="hsl(${i * 50},40%,92%)"/>` +
     `<text x="50%" y="12%" font-size="64" text-anchor="middle" font-family="sans-serif">Page ${i}</text></svg>`);
-  pages.push({ image: `pages/${i}.svg`, overlays: [] });
+  // Thumbnail drawn differently (dark) so a check can tell it from the full page.
+  fs.writeFileSync(path.join(out, 'pages', i + '-thumb.svg'),
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${W / 5}" height="${H / 5}">` +
+    `<rect width="100%" height="100%" fill="#555"/>` +
+    `<text x="50%" y="50%" font-size="24" fill="#fff" text-anchor="middle" font-family="sans-serif">${i}</text></svg>`);
+  pages.push({ image: `pages/${i}.svg`, thumb: `pages/${i}-thumb.svg`, overlays: [] });
 }
 pages[1].overlays.push(
   { id: 'd1', type: 'link', x: 0.1, y: 0.3, w: 0.8, h: 0.1, page: 5 },

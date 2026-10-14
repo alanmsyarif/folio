@@ -6,13 +6,18 @@ pdfjs.GlobalWorkerOptions.workerSrc = new URL('../vendor/pdf.worker.min.mjs', im
 // Long side of each baked page, px, and WebP quality. Bigger = sharper zoom, heavier export.
 const LONG_SIDE = 2000;
 const QUALITY = 0.85;
+// Long side of each page's thumbnail (viewer page grid, editor sidebar, placeholder while the full page loads).
+const THUMB_SIDE = 320;
+
+const webp = (canvas, n) => new Promise((ok, fail) =>
+  canvas.toBlob(b => (b ? ok(b) : fail(new Error('WebP encoding failed on page ' + n))), 'image/webp', QUALITY));
 
 export async function pdfToPages(file, onProgress) {
   // pdf.js 6 has destroy() on the loading task, not the document.
   const task = pdfjs.getDocument({ data: new Uint8Array(await file.arrayBuffer()) });
   try {
     const pdf = await task.promise;
-    const blobs = [];
+    const blobs = [], thumbs = [];
     let width = 0, height = 0;
     for (let n = 1; n <= pdf.numPages; n++) {
       const page = await pdf.getPage(n);
@@ -36,12 +41,17 @@ export async function pdfToPages(file, onProgress) {
       ctx.rect(r.x, r.y, r.w, r.h); // pdf.js doesn't clip to the page box; keep the margins clean
       ctx.clip();
       await page.render({ canvasContext: ctx, viewport, transform: [1, 0, 0, 1, r.x, r.y] }).promise;
-      blobs.push(await new Promise((ok, fail) =>
-        canvas.toBlob(b => (b ? ok(b) : fail(new Error('WebP encoding failed on page ' + n))), 'image/webp', QUALITY)));
+      blobs.push(await webp(canvas, n));
+      const s = THUMB_SIDE / Math.max(width, height);
+      const small = document.createElement('canvas');
+      small.width = Math.round(width * s);
+      small.height = Math.round(height * s);
+      small.getContext('2d').drawImage(canvas, 0, 0, small.width, small.height);
+      thumbs.push(await webp(small, n));
       page.cleanup();
       onProgress(n, pdf.numPages);
     }
-    return { blobs, width, height };
+    return { blobs, thumbs, width, height };
   } finally {
     await task.destroy();
   }
