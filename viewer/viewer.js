@@ -8,7 +8,7 @@
   const seek = document.getElementById('seek');
   const n = B.pages.length;
   seek.max = n;
-  document.getElementById('total').textContent = '/ ' + n;
+  document.getElementById('total').textContent = 'of ' + n;
 
   const pageEls = B.pages.map((p, i) => {
     const el = document.createElement('div');
@@ -83,13 +83,14 @@
     const i = flip.getCurrentPageIndex();
     loadNear(i);
     seek.value = i + 1;
+    seek.style.setProperty('--read', (n > 1 ? i / (n - 1) * 100 : 100) + '%'); // gold page edges up to here
     history.replaceState(null, '', '#p=' + (i + 1)); // replace, so turning pages doesn't fill Back history
     // Pages leaving the screen stop their media; pages arriving start their autoplay media.
     const now = FolioModel.visiblePages(i, B.pages.length, flip.getOrientation() === 'portrait');
     for (const idx of visible) if (!now.includes(idx) && pageEls[idx]) FolioOverlays.setActive(pageEls[idx], false);
     for (const idx of now) if (!visible.includes(idx) && pageEls[idx]) FolioOverlays.setActive(pageEls[idx], true);
     visible = now;
-    if (document.activeElement !== num) num.value = now.map(x => x + 1).join('-'); // "2-3" on a spread
+    if (document.activeElement !== num) num.value = now.map(x => x + 1).join('–'); // "2–3" on a spread
     centre();
   }
   flip.on('flip', onPageChange);
@@ -160,7 +161,7 @@
       const b = document.createElement('button');
       b.type = 'button';
       const head = document.createElement('strong');
-      head.textContent = 'Page ' + (h.index + 1) + (h.count > 1 ? ' · ' + h.count + ' matches' : '');
+      head.textContent = 'Page ' + (h.index + 1) + (h.count > 1 ? ', ' + h.count + ' matches' : '');
       const snip = document.createElement('span');
       const mark = document.createElement('mark');
       mark.textContent = h.match;

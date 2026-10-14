@@ -1,57 +1,131 @@
+/* Reader: "evening lobby". The book sits on a warm espresso surface lit from the centre, so photo
+   spreads read like art under a lamp. Gold appears in one place that matters (the page-edge slider)
+   and for focus; everything else is quiet ivory type. */
+:root {
+  --surface: #221e1a;      /* espresso, warm rather than black */
+  --surface-lit: #3a322a;  /* the pool of light under the book */
+  --panel: #2b2621;        /* dialogs and the phone menu */
+  --line: #4a4038;
+  --ivory: #ede6d8;
+  --ivory-dim: #a89e8f;
+  --gold: #b5985a;         /* Exquisite Media's heading gold */
+  --gold-bright: #d4b878;
+  --serif: Didot, "Bodoni 72", "Bodoni MT", "Libre Bodoni", Georgia, serif;
+  --sans: "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+}
+
 html, body { height: 100%; margin: 0; }
-body { display: flex; flex-direction: column; background: #2e2e2e; color: #eee; font: 15px system-ui, sans-serif; }
+body {
+  display: flex; flex-direction: column;
+  background: radial-gradient(ellipse 70% 60% at 50% 42%, var(--surface-lit), var(--surface) 100%) var(--surface);
+  color: var(--ivory); font: 15px/1.4 var(--sans);
+}
+button, input { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+
 /* overflow: page-flip pads .stf__wrapper to width x page ratio, taller than the stage on wide
    windows; unclipped it covers #bar and swallows its clicks. */
-#stage { flex: 1; min-height: 0; padding: 16px; box-sizing: border-box; overflow: hidden; }
+#stage { flex: 1; min-height: 0; padding: 24px 16px 12px; box-sizing: border-box; overflow: hidden; }
 #book { width: 100%; height: 100%; transition: transform .5s ease; }
 .page { background: #fff; }
 .fo-page { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; user-select: none; }
-#bar { display: flex; gap: 8px; align-items: center; justify-content: center; padding: 8px 16px 12px; }
-#bar button { font: inherit; min-width: 44px; min-height: 36px; border: 1px solid #666; border-radius: 6px; background: #3b3b3b; color: inherit; cursor: pointer; }
-#bar button:hover { background: #4a4a4a; }
-#count { min-width: 5em; text-align: center; font-variant-numeric: tabular-nums; }
-#bar { flex-wrap: wrap; }
-#num { width: 4.5em; font: inherit; text-align: right; background: #3b3b3b; color: inherit; border: 1px solid #666; border-radius: 6px; padding: 4px; }
-#seek { flex: 1 1 160px; max-width: 480px; accent-color: #ddd; }
-#thumbs { width: min(960px, 92vw); max-height: 86vh; padding: 16px; border: 0; border-radius: 10px; background: #2e2e2e; color: inherit; }
-#thumbs::backdrop { background: rgb(0 0 0 / .6); }
-#thumbs form { text-align: right; margin-bottom: 12px; }
-#thumbs button { font: inherit; border: 1px solid #666; border-radius: 6px; background: #3b3b3b; color: inherit; cursor: pointer; }
-#thumb-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 12px; }
-#thumb-list button { padding: 6px; display: grid; gap: 4px; }
-#thumb-list img { width: 100%; aspect-ratio: var(--ratio, 3 / 4); object-fit: contain; background: #fff; }
-#zoomer { width: 100vw; height: 100dvh; max-width: none; max-height: none; margin: 0; padding: 0; border: 0; background: #1e1e1e; color: inherit; }
+
+/* Bar: text controls without boxes, the page count set in the Didone serif. */
+#bar { display: flex; flex-wrap: wrap; gap: 4px 6px; align-items: center; justify-content: center; padding: 4px 16px 14px; }
+#bar button {
+  min-width: 44px; min-height: 40px; padding: 0 10px; border: 0; border-radius: 4px;
+  background: none; color: var(--ivory-dim); cursor: pointer; letter-spacing: .02em;
+}
+#bar button:hover { color: var(--ivory); }
+#prev, #next, #first, #last { font-family: var(--serif); font-size: 26px; line-height: 1; color: var(--ivory); }
+#count { display: flex; align-items: baseline; gap: .4em; padding: 0 4px; font-variant-numeric: lining-nums tabular-nums; }
+#num {
+  width: 4.2em; field-sizing: content; min-width: 1ch; padding: 2px 0; /* fits "1" or "124–125" */ border: 0; border-bottom: 1px solid transparent; background: none;
+  font-family: var(--serif); font-size: 24px; text-align: right; color: var(--ivory);
+}
+@supports (field-sizing: content) { #num { width: auto; } } /* else the fixed 4.2em above */
+#num:hover, #num:focus { border-bottom-color: var(--gold); outline: none; }
+#total { color: var(--ivory-dim); white-space: nowrap; }
+
+/* The fore-edge: the slider drawn as the book's page edges. Gold hairlines for pages already read,
+   dimmed for those still ahead; --read is set from the current page in viewer.js. */
+#seek {
+  --read: 0%;
+  flex: 1 1 200px; max-width: 520px; height: 26px; margin: 0 12px;
+  appearance: none; background:
+    linear-gradient(90deg, transparent var(--read), rgb(34 30 26 / .72) var(--read)),
+    repeating-linear-gradient(90deg, var(--gold) 0 1px, transparent 1px 3px) center / 100% 12px no-repeat;
+  cursor: pointer;
+}
+#seek::-webkit-slider-runnable-track { background: none; height: 26px; }
+#seek::-moz-range-track { background: none; }
+#seek::-webkit-slider-thumb { appearance: none; width: 3px; height: 26px; border: 0; border-radius: 1px; background: var(--ivory); box-shadow: 0 0 0 3px rgb(34 30 26 / .6); }
+#seek::-moz-range-thumb { width: 3px; height: 26px; border: 0; border-radius: 1px; background: var(--ivory); }
+#seek:focus-visible { outline-offset: 4px; }
+
+/* Dialogs share one quiet panel style. */
+dialog { border: 0; color: var(--ivory); background: var(--panel); box-shadow: 0 24px 60px rgb(0 0 0 / .55); }
+dialog::backdrop { background: rgb(20 17 14 / .72); }
+dialog button { border: 1px solid var(--line); border-radius: 4px; background: none; cursor: pointer; padding: 8px 14px; }
+dialog button:hover { border-color: var(--gold); }
+dialog button:disabled { opacity: .35; cursor: default; border-color: var(--line); }
+
+#thumbs { width: min(980px, 92vw); max-height: 86vh; padding: 20px 24px 24px; border-radius: 6px; }
+#thumbs form { text-align: right; margin-bottom: 16px; }
+#thumb-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 20px 16px; }
+#thumb-list button { padding: 0; border: 0; display: grid; gap: 6px; justify-items: center; }
+#thumb-list img { width: 100%; aspect-ratio: var(--ratio, 3 / 4); object-fit: contain; background: #fff; outline: 1px solid transparent; outline-offset: 3px; transition: outline-color .15s; }
+#thumb-list button:hover img { outline-color: var(--gold); }
+#thumb-list span { font-family: var(--serif); font-size: 17px; color: var(--ivory-dim); }
+
+#finder { width: min(640px, 92vw); max-height: 86vh; padding: 20px 24px; border-radius: 6px; }
+#fbar { display: flex; gap: 10px; align-items: center; }
+#fbar form { margin: 0; }
+#fq {
+  flex: 1; min-width: 0; padding: 6px 0; border: 0; border-bottom: 1px solid var(--line); background: none;
+  font-family: var(--serif); font-size: 24px;
+}
+#fq:focus { outline: none; border-bottom-color: var(--gold); }
+#fq::placeholder { color: var(--ivory-dim); opacity: .7; }
+#fstatus { margin: 14px 0 6px; color: var(--ivory-dim); min-height: 1.2em; }
+#fresults { list-style: none; margin: 0; padding: 0; }
+#fresults li + li { border-top: 1px solid var(--line); }
+#fresults button { width: 100%; padding: 12px 4px; border: 0; border-radius: 0; text-align: left; display: grid; gap: 4px; }
+#fresults button:hover, #fresults button:focus-visible { background: rgb(181 152 90 / .08); }
+#fresults strong { font-family: var(--serif); font-size: 18px; font-weight: normal; color: var(--gold-bright); }
+#fresults span { color: var(--ivory-dim); }
+#fresults mark { background: none; color: var(--ivory); border-bottom: 1px solid var(--gold); }
+
+#zoomer { width: 100vw; height: 100dvh; max-width: none; max-height: none; margin: 0; padding: 0; background: var(--surface); box-shadow: none; }
 #zoomer[open] { display: flex; flex-direction: column; }
-#zbar { display: flex; gap: 8px; justify-content: flex-end; padding: 8px 16px; }
+#zbar { display: flex; gap: 8px; justify-content: flex-end; padding: 10px 16px; }
 #zbar form { margin: 0; }
-#zbar button { font: inherit; min-width: 44px; min-height: 36px; border: 1px solid #666; border-radius: 6px; background: #3b3b3b; color: inherit; cursor: pointer; }
-#zbar button:disabled { opacity: .4; cursor: default; }
+#zbar button { min-width: 44px; min-height: 40px; }
+#zin, #zout { font-family: var(--serif); font-size: 22px; line-height: 1; }
 /* flex + margin:auto centres the pages while small, and lets them overflow to scroll once big */
 #zview { flex: 1; min-height: 0; overflow: auto; display: flex; cursor: grab; }
 #zview:active { cursor: grabbing; }
 #zpages { margin: auto; flex: none; display: flex; }
 #zpages img { flex: 1; min-width: 0; width: 100%; display: block; background: #fff; user-select: none; }
-#finder { width: min(640px, 92vw); max-height: 86vh; padding: 16px; border: 0; border-radius: 10px; background: #2e2e2e; color: inherit; }
-#finder::backdrop { background: rgb(0 0 0 / .6); }
-#fbar { display: flex; gap: 8px; }
-#fbar form { margin: 0; }
-#fq { flex: 1; min-width: 0; font: inherit; padding: 8px; border: 1px solid #666; border-radius: 6px; background: #3b3b3b; color: inherit; }
-#finder button { font: inherit; border: 1px solid #666; border-radius: 6px; background: #3b3b3b; color: inherit; cursor: pointer; }
-#fstatus { margin: 12px 0 8px; color: #bbb; min-height: 1.2em; }
-#fresults { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
-#fresults button { width: 100%; text-align: left; padding: 10px 12px; display: grid; gap: 4px; }
-#fresults button:hover, #fresults button:focus-visible { background: #4a4a4a; }
-#fresults mark { background: #f5c542; color: #000; border-radius: 2px; }
+
 /* Wide: the tools sit in the bar like any other buttons, and ⋯ is hidden. Narrow: ⋯ opens them as a
    menu above the bar (#tools is a native popover, so tapping outside closes it). */
-#tools { display: flex; gap: 8px; position: static; inset: auto; margin: 0; padding: 0; border: 0; background: none; color: inherit; overflow: visible; }
+#tools { display: flex; gap: 2px; position: static; inset: auto; margin: 0; padding: 0; border: 0; background: none; color: inherit; overflow: visible; }
 #more { display: none; }
 @media (max-width: 720px) {
-  #bar { gap: 6px; padding: 6px 16px 10px; }
-  #seek { flex-basis: 100%; max-width: none; order: -1; } /* full-width row above the buttons */
+  #stage { padding: 12px 12px 4px; }
+  #bar { gap: 2px; padding: 0 12px 10px; }
+  #seek { flex-basis: 100%; max-width: none; order: -1; margin: 0 0 4px; } /* full-width row above the buttons */
   #first, #last { display: none; } /* the slider and Home / End reach the ends */
-  #more { display: inline-block; }
+  #more { display: inline-block; font-size: 20px; }
   #tools:not(:popover-open) { display: none; }
-  #tools:popover-open { position: fixed; inset: auto 16px 88px auto; /* clears the two-row bar (78px) */ flex-direction: column; padding: 8px; border-radius: 10px; background: #2e2e2e; box-shadow: 0 6px 24px rgb(0 0 0 / .5); }
-  #tools button { text-align: left; padding: 8px 14px; }
+  #tools:popover-open {
+    position: fixed; inset: auto 16px 92px auto; /* clears the two-row bar */
+    flex-direction: column; padding: 6px; border-radius: 6px; background: var(--panel); box-shadow: 0 16px 40px rgb(0 0 0 / .55);
+  }
+  #tools button { text-align: left; padding: 10px 16px; color: var(--ivory); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #book, #thumb-list img { transition: none; }
 }

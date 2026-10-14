@@ -1,36 +1,84 @@
+/* Editor: "paste-up desk". The page lies on a green cutting mat; boxes are drawn in non-photo blue,
+   the layout artist's pencil, which stays visible over any photograph. Proof red marks a box that
+   still needs something. Panels are plain paper so the page stays the brightest thing on screen. */
+:root {
+  --mat: #3e6b5a;
+  --mat-line: rgb(255 255 255 / .07);
+  --mat-line-major: rgb(255 255 255 / .11);
+  --paper: #fbfaf7;
+  --rule: #dcd8d0;
+  --ink: #26231f;
+  --ink-dim: #6e685f;
+  --pencil: #2f8fd8;        /* non-photo blue, deepened enough to read on white */
+  --pencil-wash: rgb(47 143 216 / .12);
+  --proof: #c8302b;         /* proof-correction red */
+  --gold: #b5985a;          /* the publisher's gold, kept to the toolbar */
+}
+
 * { box-sizing: border-box; }
 html, body { height: 100%; margin: 0; }
-body { display: flex; flex-direction: column; font: 14px system-ui, sans-serif; color: #1d1d1f; background: #f2f2f4; }
-#toolbar { display: flex; gap: 8px; align-items: center; padding: 8px 12px; background: #fff; border-bottom: 1px solid #ddd; }
-#toolbar button, .btn { font: inherit; padding: 6px 12px; border: 1px solid #bbb; border-radius: 6px; background: #fff; cursor: pointer; }
-#toolbar button[aria-pressed="true"] { background: #1d1d1f; color: #fff; }
-#toolbar button:disabled, #title:disabled { opacity: 0.5; cursor: default; }
-#title { flex: 0 1 240px; font: inherit; padding: 6px 8px; border: 1px solid #bbb; border-radius: 6px; }
-#status { margin-left: auto; color: #555; }
-#status.error { color: #b00020; }
-main { flex: 1; min-height: 0; display: grid; grid-template-columns: 140px 1fr 280px; }
-#thumbs { overflow-y: auto; padding: 8px; display: flex; flex-direction: column; gap: 8px; border-right: 1px solid #ddd; background: #fff; }
-#thumbs button { padding: 4px; border: 2px solid transparent; border-radius: 4px; background: none; cursor: pointer; font: inherit; }
-#thumbs button[aria-current="page"] { border-color: #2563eb; }
-#thumbs img { width: 100%; display: block; }
-#stage { overflow: auto; display: grid; place-items: center; padding: 16px; }
-#page { position: relative; box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2); }
-#page-img { display: block; max-width: 100%; max-height: calc(100vh - 90px); user-select: none; }
+body { display: flex; flex-direction: column; font: 14px/1.4 "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif; color: var(--ink); background: var(--paper); }
+:focus-visible { outline: 2px solid var(--pencil); outline-offset: 2px; }
+
+#toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 8px 14px; background: var(--paper); border-bottom: 2px solid var(--gold); }
+#toolbar button, .btn { font: inherit; padding: 6px 12px; border: 1px solid var(--rule); border-radius: 3px; background: #fff; color: var(--ink); cursor: pointer; }
+#toolbar button:hover:not(:disabled), .btn:hover { border-color: var(--ink-dim); }
+#toolbar button[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+#toolbar button:disabled, #title:disabled { opacity: .45; cursor: default; }
+#undo, #redo { min-width: 36px; padding: 6px 8px; font-size: 16px; line-height: 1; }
+#export:not(:disabled) { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+#title { flex: 0 1 260px; font: inherit; padding: 6px 2px; border: 0; border-bottom: 1px solid var(--rule); background: none; font-size: 15px; font-weight: 600; }
+#title:focus { outline: none; border-bottom-color: var(--pencil); }
+#status { margin-left: auto; color: var(--ink-dim); }
+#status.error { color: var(--proof); }
+
+main { flex: 1; min-height: 0; display: grid; grid-template-columns: 132px 1fr 280px; }
+
+#thumbs { overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 10px; border-right: 1px solid var(--rule); background: var(--paper); }
+#thumbs button { padding: 4px 4px 2px; border: 0; border-radius: 2px; background: none; cursor: pointer; font: inherit; font-size: 12px; color: var(--ink-dim); display: grid; gap: 2px; justify-items: center; }
+#thumbs button:hover { background: #f0ede6; }
+#thumbs button[aria-current="page"] { color: var(--ink); font-weight: 600; }
+#thumbs button[aria-current="page"] img { outline: 2px solid var(--pencil); outline-offset: 1px; }
+#thumbs img { width: 100%; display: block; background: #fff; box-shadow: 0 0 0 1px var(--rule); }
+
+/* The cutting mat: a 10 px grid with a stronger line every 50 px. */
+#stage {
+  overflow: auto; display: grid; place-items: center; padding: 24px;
+  background-color: var(--mat);
+  background-image:
+    linear-gradient(var(--mat-line-major) 1px, transparent 1px),
+    linear-gradient(90deg, var(--mat-line-major) 1px, transparent 1px),
+    linear-gradient(var(--mat-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--mat-line) 1px, transparent 1px);
+  background-size: 50px 50px, 50px 50px, 10px 10px, 10px 10px;
+}
+#page { position: relative; box-shadow: 0 1px 2px rgb(0 0 0 / .25), 0 10px 30px rgb(0 0 0 / .3); }
+#page-img { display: block; max-width: 100%; max-height: calc(100vh - 110px); user-select: none; }
 #layer { cursor: crosshair; touch-action: none; }
 #layer.preview { cursor: auto; }
-.box { position: absolute; border: 2px dashed #2563eb; background: rgba(37, 99, 235, 0.08) center / contain no-repeat; color: #1e3a8a; font-size: 12px; padding: 2px 4px; white-space: nowrap; cursor: move; }
-.box.invalid { border-color: #b00020; color: #b00020; }
-.box.selected { border-style: solid; }
-.handle { position: absolute; width: 12px; height: 12px; background: #2563eb; border: 2px solid #fff; border-radius: 50%; }
-.handle.nw { left: -7px; top: -7px; cursor: nwse-resize; }
-.handle.ne { right: -7px; top: -7px; cursor: nesw-resize; }
-.handle.sw { left: -7px; bottom: -7px; cursor: nesw-resize; }
-.handle.se { right: -7px; bottom: -7px; cursor: nwse-resize; }
-#props { padding: 12px; border-left: 1px solid #ddd; background: #fff; overflow-y: auto; }
-#props label { display: block; margin: 10px 0 4px; font-weight: 600; }
-#props input, #props select { width: 100%; font: inherit; padding: 6px; }
-#props label.check { display: flex; gap: 6px; align-items: center; font-weight: normal; margin-top: 12px; }
+
+.box {
+  position: absolute; border: 1.5px dashed var(--pencil); background: var(--pencil-wash) center / contain no-repeat;
+  padding: 2px 5px; font-size: 12px; font-weight: 600; white-space: nowrap; cursor: move;
+  /* Label in deep pencil blue with a white halo, so it reads on light and dark photos alike. */
+  color: #135c94; text-shadow: 0 0 2px #fff, 0 0 2px #fff, 0 0 3px #fff;
+}
+.box.selected { border-style: solid; border-width: 2px; }
+.box.invalid { border-color: var(--proof); background-color: rgb(200 48 43 / .1); color: var(--proof); }
+.handle { position: absolute; width: 10px; height: 10px; background: #fff; border: 2px solid var(--pencil); border-radius: 0; }
+.box.invalid .handle { border-color: var(--proof); }
+.handle.nw { left: -6px; top: -6px; cursor: nwse-resize; }
+.handle.ne { right: -6px; top: -6px; cursor: nesw-resize; }
+.handle.sw { left: -6px; bottom: -6px; cursor: nesw-resize; }
+.handle.se { right: -6px; bottom: -6px; cursor: nwse-resize; }
+
+#props { padding: 16px; border-left: 1px solid var(--rule); background: var(--paper); overflow-y: auto; }
+#props label { display: block; margin: 14px 0 4px; font-weight: 600; font-size: 13px; }
+#props input, #props select { width: 100%; font: inherit; padding: 7px 8px; border: 1px solid var(--rule); border-radius: 3px; background: #fff; color: var(--ink); }
+#props input:focus, #props select:focus { outline: none; border-color: var(--pencil); box-shadow: 0 0 0 2px var(--pencil-wash); }
+#props label.check { display: flex; gap: 8px; align-items: center; font-weight: normal; margin-top: 14px; }
 #props label.check input { width: auto; }
-#props button { margin-top: 16px; font: inherit; padding: 6px 12px; }
-#props .error { color: #b00020; }
-#props .hint { color: #666; }
+#props button { margin-top: 20px; font: inherit; padding: 6px 12px; border: 1px solid var(--rule); border-radius: 3px; background: #fff; color: var(--proof); cursor: pointer; }
+#props button:hover { border-color: var(--proof); }
+#props .error { color: var(--proof); }
+#props .hint { color: var(--ink-dim); }
