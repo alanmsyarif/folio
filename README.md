@@ -62,7 +62,7 @@ over http(s). For offline books, use a video file instead.
     npm test       # model unit tests
     npm run demo   # writes demo/, a 6-page sample book for checking the viewer
 
-Vendored: pdf.js 6.4.299, page-flip 2.0.7 (see vendor/LICENSES.md).
+Vendored: pdf.js 6.4.299, page-flip 2.0.7, Bodoni Moda 5.3.0 font (see vendor/LICENSES.md).
 
 ## Tested
 

@@ -15,6 +15,7 @@
     ['shared/overlays.js', 'overlays.js'],
     ['shared/overlays.css', 'overlays.css'],
     ['vendor/page-flip.browser.js', 'page-flip.browser.js'],
+    ['vendor/bodoni-moda-latin-400.woff2', 'bodoni-moda-latin-400.woff2'], // reader serif, OFL-1.1
   ];
 
   // opts.autoplay: muted autoplay + loop (browsers only autoplay muted; YouTube loops via playlist=ID).

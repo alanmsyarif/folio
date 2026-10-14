@@ -1,6 +1,14 @@
 /* Reader: "evening lobby". The book sits on a warm espresso surface lit from the centre, so photo
    spreads read like art under a lamp. Gold appears in one place that matters (the page-edge slider)
    and for focus; everything else is quiet ivory type. */
+/* Bundled so the page count looks the same on every device and offline (vendor/LICENSES.md).
+   Latin only; other scripts typed into search fall back to the system serif. */
+@font-face {
+  font-family: "Folio Didone";
+  src: url("bodoni-moda-latin-400.woff2") format("woff2");
+  font-weight: 400;
+  font-display: swap;
+}
 :root {
   --surface: #221e1a;      /* espresso, warm rather than black */
   --surface-lit: #3a322a;  /* the pool of light under the book */
@@ -10,7 +18,7 @@
   --ivory-dim: #a89e8f;
   --gold: #b5985a;         /* Exquisite Media's heading gold */
   --gold-bright: #d4b878;
-  --serif: Didot, "Bodoni 72", "Bodoni MT", "Libre Bodoni", Georgia, serif;
+  --serif: "Folio Didone", Didot, "Bodoni 72", "Bodoni MT", Georgia, serif;
   --sans: "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
 }
 
