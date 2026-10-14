@@ -18,12 +18,21 @@
   <input id="seek" type="range" min="1" aria-label="Go to page">
   <button id="grid" type="button">Pages</button>
   <button id="zoom" type="button">Zoom</button>
+  <button id="find" type="button" hidden>Search</button>
   <button id="share" type="button" hidden>Share</button>
   <button id="full" type="button">Fullscreen</button>
 </nav>
 <dialog id="thumbs" aria-label="All pages">
   <form method="dialog"><button id="thumbs-close">Close</button></form>
   <div id="thumb-list"></div>
+</dialog>
+<dialog id="finder" aria-label="Search the book">
+  <div id="fbar">
+    <input id="fq" type="search" placeholder="Search the book" aria-label="Search the book" autocomplete="off">
+    <form method="dialog"><button type="submit">Close</button></form>
+  </div>
+  <p id="fstatus" aria-live="polite"></p>
+  <ol id="fresults"></ol>
 </dialog>
 <dialog id="zoomer" aria-label="Zoomed pages">
   <div id="zbar">

@@ -31,3 +31,14 @@ body { display: flex; flex-direction: column; background: #2e2e2e; color: #eee; 
 #zview:active { cursor: grabbing; }
 #zpages { margin: auto; flex: none; display: flex; }
 #zpages img { flex: 1; min-width: 0; width: 100%; display: block; background: #fff; user-select: none; }
+#finder { width: min(640px, 92vw); max-height: 86vh; padding: 16px; border: 0; border-radius: 10px; background: #2e2e2e; color: inherit; }
+#finder::backdrop { background: rgb(0 0 0 / .6); }
+#fbar { display: flex; gap: 8px; }
+#fbar form { margin: 0; }
+#fq { flex: 1; min-width: 0; font: inherit; padding: 8px; border: 1px solid #666; border-radius: 6px; background: #3b3b3b; color: inherit; }
+#finder button { font: inherit; border: 1px solid #666; border-radius: 6px; background: #3b3b3b; color: inherit; cursor: pointer; }
+#fstatus { margin: 12px 0 8px; color: #bbb; min-height: 1.2em; }
+#fresults { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+#fresults button { width: 100%; text-align: left; padding: 10px 12px; display: grid; gap: 4px; }
+#fresults button:hover, #fresults button:focus-visible { background: #4a4a4a; }
+#fresults mark { background: #f5c542; color: #000; border-radius: 2px; }

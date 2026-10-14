@@ -11,6 +11,15 @@ fs.mkdirSync(path.join(out, 'pages'), { recursive: true });
 
 const W = 700, H = 990;
 const pages = [];
+// Search text for each page (the demo SVGs don't carry real text). Page 6 has none, like a scanned page.
+const DEMO_TEXT = [
+  'Page 1. A short guide to the harbour town and its lighthouse.',
+  'Page 2. Getting there: ferries leave the harbour every hour. Café Nord sits by the pier.',
+  'Page 3. Walks along the cliffs, and a video of the lighthouse at dusk.',
+  'Page 4. Where to eat: the cafe on the square, the bakery, the fish market.',
+  'Page 5. Evening: the lighthouse lamp turns on at sunset. Lighthouse tours run on Fridays.',
+  '',
+];
 for (let i = 1; i <= 6; i++) {
   fs.writeFileSync(path.join(out, 'pages', i + '.svg'),
     `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}">` +
@@ -21,7 +30,7 @@ for (let i = 1; i <= 6; i++) {
     `<svg xmlns="http://www.w3.org/2000/svg" width="${W / 5}" height="${H / 5}">` +
     `<rect width="100%" height="100%" fill="#555"/>` +
     `<text x="50%" y="50%" font-size="24" fill="#fff" text-anchor="middle" font-family="sans-serif">${i}</text></svg>`);
-  pages.push({ image: `pages/${i}.svg`, thumb: `pages/${i}-thumb.svg`, overlays: [] });
+  pages.push({ image: `pages/${i}.svg`, thumb: `pages/${i}-thumb.svg`, overlays: [], text: DEMO_TEXT[i - 1] });
 }
 pages[1].overlays.push(
   { id: 'd1', type: 'link', x: 0.1, y: 0.3, w: 0.8, h: 0.1, page: 5 },

@@ -139,6 +139,36 @@
   });
   document.getElementById('grid').onclick = () => thumbs.showModal();
 
+  // Search over the text baked at PDF import. Books without any (scans, older exports) get no button.
+  // ponytail: results jump to the page but don't highlight the words on it; that needs word positions from import.
+  const finder = document.getElementById('finder');
+  const fq = document.getElementById('fq');
+  const fstatus = document.getElementById('fstatus');
+  const fresults = document.getElementById('fresults');
+  const findBtn = document.getElementById('find');
+  findBtn.hidden = !B.pages.some(p => p.text);
+  findBtn.onclick = () => { finder.showModal(); fq.select(); };
+  fq.oninput = () => {
+    const hits = FolioModel.searchPages(B.pages, fq.value);
+    fstatus.textContent = fq.value.trim().length < 2 ? '' : hits.length ? hits.length + (hits.length === 1 ? ' page' : ' pages') : 'No matches';
+    fresults.replaceChildren(...hits.map(h => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      const head = document.createElement('strong');
+      head.textContent = 'Page ' + (h.index + 1) + (h.count > 1 ? ' · ' + h.count + ' matches' : '');
+      const snip = document.createElement('span');
+      const mark = document.createElement('mark');
+      mark.textContent = h.match;
+      snip.append(h.before, mark, h.after); // text nodes: page text is never parsed as HTML
+      b.append(head, snip);
+      b.onclick = () => { finder.close(); goTo(h.index + 1); };
+      const li = document.createElement('li');
+      li.append(b);
+      return li;
+    }));
+  };
+  fq.onkeydown = e => { if (e.key === 'Enter') fresults.querySelector('button')?.click(); }; // Enter = first result
+
   // Zoom: the pages on screen, full resolution, in a scrollable full-window view. Images only:
   // ponytail: links and videos aren't clickable while zoomed; render overlays here if readers need them.
   const zoomer = document.getElementById('zoomer');
@@ -181,7 +211,7 @@
   if (!document.fullscreenEnabled) full.hidden = true;
   full.onclick = () => (document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen());
   document.addEventListener('keydown', e => {
-    if (e.target instanceof HTMLInputElement || thumbs.open || zoomer.open) return; // arrows belong to the number box and slider
+    if (e.target instanceof HTMLInputElement || thumbs.open || zoomer.open || finder.open) return; // arrows belong to the number box and slider
     if (e.key === 'Home') goTo(1);
     if (e.key === 'End') goTo(n);
     if (e.key === 'ArrowLeft') flip.flipPrev();

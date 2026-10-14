@@ -17,7 +17,7 @@ export async function pdfToPages(file, onProgress) {
   const task = pdfjs.getDocument({ data: new Uint8Array(await file.arrayBuffer()) });
   try {
     const pdf = await task.promise;
-    const blobs = [], thumbs = [];
+    const blobs = [], thumbs = [], texts = [];
     let width = 0, height = 0;
     for (let n = 1; n <= pdf.numPages; n++) {
       const page = await pdf.getPage(n);
@@ -48,10 +48,13 @@ export async function pdfToPages(file, onProgress) {
       small.height = Math.round(height * s);
       small.getContext('2d').drawImage(canvas, 0, 0, small.width, small.height);
       thumbs.push(await webp(small, n));
+      // Plain text for the viewer's search. Items without str are marked-content markers.
+      const content = await page.getTextContent();
+      texts.push(content.items.map(it => (it.str ?? '') + (it.hasEOL ? ' ' : '')).join('').replace(/\s+/g, ' ').trim());
       page.cleanup();
       onProgress(n, pdf.numPages);
     }
-    return { blobs, thumbs, width, height };
+    return { blobs, thumbs, texts, width, height };
   } finally {
     await task.destroy();
   }

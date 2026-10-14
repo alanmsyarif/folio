@@ -158,6 +158,38 @@ test('usedPaths and parseBookJs carry page thumbnails', () => {
   assert.throws(() => M.parseBookJs('window.BOOK = {"version":1,"pages":[{"image":"pages/1.webp","thumb":"../t.webp","overlays":[]}]};'), /thumbnail/);
 });
 
+test('searchPages finds pages ignoring case and accents, with a snippet around the first hit', () => {
+  const pages = [
+    { text: 'Welcome to the Café of Dreams. The café opens at nine.' },
+    { text: 'Nothing here.' },
+    {},
+    { text: 'CAFE prices' },
+  ];
+  const r = M.searchPages(pages, 'cafe');
+  assert.deepEqual(r.map(x => [x.index, x.count]), [[0, 2], [3, 1]]);
+  assert.equal(r[0].match, 'Café');
+  assert.equal(r[0].before + r[0].match + r[0].after, 'Welcome to the Café of Dreams. The café opens at nine.');
+  assert.equal(r[1].match, 'CAFE');
+  assert.deepEqual(M.searchPages(pages, '  CAFÉ   of  '), M.searchPages(pages, 'café of'));
+  assert.deepEqual(M.searchPages(pages, 'c'), []); // one letter matches everything; wait for more
+  const long = { text: 'x'.repeat(100) + 'needle' + 'y'.repeat(100) };
+  const [hit] = M.searchPages([long], 'needle', 10);
+  assert.equal(hit.before, '…' + 'x'.repeat(10));
+  assert.equal(hit.after, 'y'.repeat(10) + '…');
+});
+
+test('searchPages keeps snippets aligned when the text holds combining accents', () => {
+  const [hit] = M.searchPages([{ text: 'une café noir' }], 'café');
+  assert.equal(hit.match, 'café');
+  assert.equal(hit.after, ' noir');
+});
+
+test('parseBookJs drops page text that is not a string', () => {
+  const b = M.parseBookJs('window.BOOK = {"version":1,"pages":[{"image":"pages/1.webp","text":5,"overlays":[]},{"image":"pages/2.webp","text":"hi","overlays":[]}]};');
+  assert.equal(b.pages[0].text, undefined);
+  assert.equal(b.pages[1].text, 'hi');
+});
+
 test('fitRect centres a page of another shape inside the book page size', () => {
   assert.deepEqual(M.fitRect(2000, 1000, 1000, 1414), { x: 0, y: 457, w: 1000, h: 500 });
   assert.deepEqual(M.fitRect(500, 1000, 1000, 1414), { x: 147, y: 0, w: 707, h: 1414 });

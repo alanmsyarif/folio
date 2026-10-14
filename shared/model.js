@@ -140,6 +140,44 @@
     return m ? Math.min(pageCount, Math.max(1, Number(m[1]))) - 1 : 0;
   }
 
+  // Lower-cases and strips accents, remembering where each folded character came from in s,
+  // so a match found in the folded text can be cut out of the original.
+  function fold(s) {
+    let out = '';
+    const from = [];
+    let i = 0;
+    for (const ch of s) {
+      for (const c of ch.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase()) { out += c; from.push(i); }
+      i += ch.length;
+    }
+    return { out, from };
+  }
+
+  // Pages whose text contains query (case and accents ignored), in page order, each with its
+  // match count and a short snippet around the first match split into before / match / after.
+  function searchPages(pages, query, context = 40) {
+    const q = fold(query.trim().replace(/\s+/g, ' ')).out;
+    if (q.length < 2) return [];
+    const results = [];
+    pages.forEach((p, index) => {
+      const text = typeof p.text === 'string' ? p.text : '';
+      const { out, from } = fold(text);
+      let at = out.indexOf(q), count = 0, first = at;
+      while (at !== -1) { count++; at = out.indexOf(q, at + q.length); }
+      if (!count) return;
+      // End where the next kept character starts, so accent marks trailing the match stay in it.
+      const start = from[first], end = from[first + q.length] ?? text.length;
+      const a = Math.max(0, start - context), b = Math.min(text.length, end + context);
+      results.push({
+        index, count,
+        before: (a > 0 ? '…' : '') + text.slice(a, start),
+        match: text.slice(start, end),
+        after: text.slice(end, b) + (b < text.length ? '…' : ''),
+      });
+    });
+    return results;
+  }
+
   // Where a page of size srcW×srcH goes, scaled to fit and centred, inside a boxW×boxH page.
   function fitRect(srcW, srcH, boxW, boxH) {
     const scale = Math.min(boxW / srcW, boxH / srcH);
@@ -161,13 +199,14 @@
       if (!/^pages\/[^/\\]+$/.test(p.image || '') || p.image.includes('..')) throw new Error('Bad page image path: ' + p.image);
       if (p.thumb !== undefined && (!/^pages\/[^/\\]+$/.test(p.thumb) || p.thumb.includes('..'))) throw new Error('Bad page thumbnail path: ' + p.thumb);
       if (!Array.isArray(p.overlays)) p.overlays = [];
+      if (p.text !== undefined && typeof p.text !== 'string') delete p.text; // search text is optional
     }
     return book;
   }
 
   const api = {
     VIEWER_FILES, toEmbedUrl, isSafeHref, clampRect, validateOverlay, firstInvalid,
-    newId, mediaName, isLocalPath, usedPaths, exportPlan, visiblePages, pageFromHash, fitRect, serializeBook, parseBookJs,
+    newId, mediaName, isLocalPath, usedPaths, exportPlan, visiblePages, pageFromHash, searchPages, fitRect, serializeBook, parseBookJs,
   };
   root.FolioModel = api;
   if (typeof module === 'object' && module.exports) module.exports = api;
