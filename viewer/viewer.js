@@ -138,11 +138,50 @@
     list.append(b);
   });
   document.getElementById('grid').onclick = () => thumbs.showModal();
+
+  // Zoom: the pages on screen, full resolution, in a scrollable full-window view. Images only:
+  // ponytail: links and videos aren't clickable while zoomed; render overlays here if readers need them.
+  const zoomer = document.getElementById('zoomer');
+  const zview = document.getElementById('zview');
+  const zpages = document.getElementById('zpages');
+  const zin = document.getElementById('zin'), zout = document.getElementById('zout');
+  const MIN = 1, MAX = 4;
+  let scale = 1;
+  function setScale(s) {
+    // Keep the point at the centre of the view where it is.
+    const cx = (zview.scrollLeft + zview.clientWidth / 2) / zview.scrollWidth;
+    const cy = (zview.scrollTop + zview.clientHeight / 2) / zview.scrollHeight;
+    scale = Math.min(MAX, Math.max(MIN, s));
+    const count = zpages.children.length;
+    const fit = Math.min(zview.clientWidth, zview.clientHeight * count * B.pageWidth / B.pageHeight); // whole spread fits at 1×
+    zpages.style.width = fit * scale + 'px';
+    zview.scrollLeft = cx * zview.scrollWidth - zview.clientWidth / 2;
+    zview.scrollTop = cy * zview.scrollHeight - zview.clientHeight / 2;
+    zin.disabled = scale >= MAX;
+    zout.disabled = scale <= MIN;
+  }
+  document.getElementById('zoom').onclick = () => {
+    zpages.replaceChildren(...visible.map(i => Object.assign(new Image(), { src: B.pages[i].image, alt: 'Page ' + (i + 1), draggable: false })));
+    zoomer.showModal();
+    setScale(2);
+    zview.scrollLeft = (zview.scrollWidth - zview.clientWidth) / 2; // open on the middle of the spread
+    zview.scrollTop = (zview.scrollHeight - zview.clientHeight) / 2;
+  };
+  zin.onclick = () => setScale(scale * 1.5);
+  zout.onclick = () => setScale(scale / 1.5);
+  // Mouse drag pans (touch and trackpads already scroll natively).
+  zview.addEventListener('pointerdown', e => {
+    if (e.pointerType !== 'mouse' || e.button !== 0) return;
+    zview.setPointerCapture(e.pointerId);
+    const move = ev => { zview.scrollLeft -= ev.movementX; zview.scrollTop -= ev.movementY; };
+    zview.addEventListener('pointermove', move);
+    zview.addEventListener('pointerup', () => zview.removeEventListener('pointermove', move), { once: true });
+  });
   const full = document.getElementById('full');
   if (!document.fullscreenEnabled) full.hidden = true;
   full.onclick = () => (document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen());
   document.addEventListener('keydown', e => {
-    if (e.target instanceof HTMLInputElement || thumbs.open) return; // arrows belong to the number box and slider
+    if (e.target instanceof HTMLInputElement || thumbs.open || zoomer.open) return; // arrows belong to the number box and slider
     if (e.key === 'Home') goTo(1);
     if (e.key === 'End') goTo(n);
     if (e.key === 'ArrowLeft') flip.flipPrev();

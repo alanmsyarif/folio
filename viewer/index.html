@@ -17,12 +17,21 @@
   <button id="last" type="button" aria-label="Last page">»</button>
   <input id="seek" type="range" min="1" aria-label="Go to page">
   <button id="grid" type="button">Pages</button>
+  <button id="zoom" type="button">Zoom</button>
   <button id="share" type="button" hidden>Share</button>
   <button id="full" type="button">Fullscreen</button>
 </nav>
 <dialog id="thumbs" aria-label="All pages">
   <form method="dialog"><button id="thumbs-close">Close</button></form>
   <div id="thumb-list"></div>
+</dialog>
+<dialog id="zoomer" aria-label="Zoomed pages">
+  <div id="zbar">
+    <button id="zout" type="button" aria-label="Zoom out">−</button>
+    <button id="zin" type="button" aria-label="Zoom in">+</button>
+    <form method="dialog"><button type="submit">Close</button></form>
+  </div>
+  <div id="zview"><div id="zpages"></div></div>
 </dialog>
 <script src="page-flip.browser.js"></script>
 <script src="book.js"></script>

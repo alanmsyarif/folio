@@ -20,3 +20,14 @@ body { display: flex; flex-direction: column; background: #2e2e2e; color: #eee; 
 #thumb-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 12px; }
 #thumb-list button { padding: 6px; display: grid; gap: 4px; }
 #thumb-list img { width: 100%; aspect-ratio: var(--ratio, 3 / 4); object-fit: contain; background: #fff; }
+#zoomer { width: 100vw; height: 100dvh; max-width: none; max-height: none; margin: 0; padding: 0; border: 0; background: #1e1e1e; color: inherit; }
+#zoomer[open] { display: flex; flex-direction: column; }
+#zbar { display: flex; gap: 8px; justify-content: flex-end; padding: 8px 16px; }
+#zbar form { margin: 0; }
+#zbar button { font: inherit; min-width: 44px; min-height: 36px; border: 1px solid #666; border-radius: 6px; background: #3b3b3b; color: inherit; cursor: pointer; }
+#zbar button:disabled { opacity: .4; cursor: default; }
+/* flex + margin:auto centres the pages while small, and lets them overflow to scroll once big */
+#zview { flex: 1; min-height: 0; overflow: auto; display: flex; cursor: grab; }
+#zview:active { cursor: grabbing; }
+#zpages { margin: auto; flex: none; display: flex; }
+#zpages img { flex: 1; min-width: 0; width: 100%; display: block; background: #fff; user-select: none; }
