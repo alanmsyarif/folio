@@ -81,4 +81,13 @@ main { flex: 1; min-height: 0; display: grid; grid-template-columns: 132px 1fr 2
 #props button { margin-top: 20px; font: inherit; padding: 6px 12px; border: 1px solid var(--rule); border-radius: 3px; background: #fff; color: var(--proof); cursor: pointer; }
 #props button:hover { border-color: var(--proof); }
 #props .error { color: var(--proof); }
-#props .hint { color: var(--ink-dim); }
+#props .hint { color: var(--ink-dim); overflow-wrap: anywhere; }
+#props h2 { margin: 24px 0 0; padding-top: 16px; border-top: 1px solid var(--rule); font-size: 13px; font-weight: 600; color: var(--ink-dim); }
+#props textarea { width: 100%; font: inherit; padding: 7px 8px; border: 1px solid var(--rule); border-radius: 3px; background: #fff; color: var(--ink); resize: vertical; }
+#props textarea:focus { outline: none; border-color: var(--pencil); box-shadow: 0 0 0 2px var(--pencil-wash); }
+#b-embed { font: 12px/1.4 Consolas, "Cascadia Mono", Menlo, monospace; color: var(--ink-dim); }
+#props #b-copy { margin-top: 8px; color: var(--ink); } /* #props button is Delete's red */
+#props #b-copy:hover { border-color: var(--ink-dim); }
+#props .hint.error { color: var(--proof); }
+#b-contents + .hint, #b-url + .hint { margin-top: 4px; font-size: 12px; }
+#props textarea[hidden], #props button[hidden] { display: none; }

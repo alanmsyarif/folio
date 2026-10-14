@@ -18,6 +18,7 @@
   <input id="seek" type="range" min="1" aria-label="Go to page">
   <!-- Inline on wide screens; on narrow ones a menu behind ⋯ (see viewer.css). -->
   <div id="tools" popover>
+    <button id="contents" type="button" hidden>Contents</button>
     <button id="grid" type="button">Pages</button>
     <button id="zoom" type="button">Zoom</button>
     <button id="find" type="button" hidden>Search</button>
@@ -29,6 +30,10 @@
 <dialog id="thumbs" aria-label="All pages">
   <form method="dialog"><button id="thumbs-close">Close</button></form>
   <div id="thumb-list"></div>
+</dialog>
+<dialog id="toc" aria-label="Contents">
+  <div id="tocbar"><h2>Contents</h2><form method="dialog"><button type="submit">Close</button></form></div>
+  <ol id="toc-list"></ol>
 </dialog>
 <dialog id="finder" aria-label="Search the book">
   <div id="fbar">

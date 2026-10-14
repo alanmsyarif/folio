@@ -10,6 +10,7 @@ static folder you can upload anywhere or open from disk.
 Open http://127.0.0.1:8080/editor/ in Chrome, Edge or Opera (export needs the File System Access API).
 
 1. **Open PDF.** Every page is rendered to an image, plus a small thumbnail and its text for search.
+   The PDF's bookmarks become the book's contents.
 2. Drag on a page to draw a box. Choose its type in the right panel:
    - **Image**: PNG, JPEG, WebP or GIF from disk.
    - **Video file**: MP4 or WebM from disk, copied into the book.
@@ -22,7 +23,14 @@ Open http://127.0.0.1:8080/editor/ in Chrome, Edge or Opera (export needs the Fi
 3. Drag a box to move it, drag its corners to resize, and press Delete to remove it.
    **↶ / ↷** (Ctrl+Z, Ctrl+Shift+Z or Ctrl+Y) undo and redo box changes, on any page.
    **Preview** shows the boxes working.
-4. **Export…** and pick a folder. To keep editing later, use **Open book folder** on that same folder,
+4. With no box selected, the right panel shows the **Book** settings:
+   - **Description**: one or two sentences shown when the link is shared.
+   - **Web address**: where the exported folder will be online. Shared links on Facebook, WhatsApp,
+     LinkedIn and X then show the cover, and **Embed on a website** gives an `<iframe>` to paste
+     into another site.
+   - **Contents**: one entry per line, page number then title (`4 Editor's letter`). Filled from the
+     PDF's bookmarks; edit or type your own.
+5. **Export…** and pick a folder. To keep editing later, use **Open book folder** on that same folder,
    then export again.
 
 ## Read
@@ -33,6 +41,7 @@ arrow keys. The bar also has:
 - **« »** (or Home / End): first and last page.
 - **Page box**: shows the spread on screen ("2-3"); type a number and press Enter to jump.
 - **Slider**: scrub through the book.
+- **Contents**: the book's contents; click an entry to go to its page. Hidden when there are none.
 - **Pages**: a grid of every page; click one to go there.
 - **Zoom**: the pages on screen at full size. **+** / **−** zoom from 1× to 4×, drag (or scroll) to
   move around, Esc to close. Links and videos can't be clicked while zoomed.
@@ -53,6 +62,10 @@ back to the thumbnail once they're far away, so long books stay light on memory.
 
 Upload the exported folder to any static host (GitHub Pages, Netlify, your own server) or open its
 `index.html` from disk.
+
+Link previews only work once the folder is online at the **Web address** set in the editor, since
+Facebook, WhatsApp and the rest fetch `cover.jpg` from there. They cache previews for days; after
+changing a cover, refresh it with Facebook's Sharing Debugger.
 
 YouTube embeds usually refuse to play from a file opened on disk. They work once the folder is hosted
 over http(s). For offline books, use a video file instead.
@@ -100,6 +113,8 @@ Vendored: pdf.js 6.4.299, page-flip 2.0.7, Bodoni Moda 5.3.0 font (see vendor/LI
 | Viewer: pages near the reader load full size, the rest stay thumbnails; grid uses thumbnails | pass |
 | 40-page book: only the spread ±2–3 pages hold full images; far pages return to thumbnails after jumps | pass |
 | Editor undo / redo: draw, type, link target, move, delete across two pages undo in order and jump to the changed page; redo; a new edit clears redo; Ctrl+Z in the title field left alone; off in Preview | pass |
+| Contents: PDF bookmarks import as entries; bad lines flagged; reader list jumps to the page | pass |
+| Export writes title, description and link-preview tags into index.html (escaped) and a 1200×630 cover.jpg; embed code appears once the web address is valid | pass (browser-private storage stand-in for the folder picker) |
 | Phone size (390×844, touch emulated): no sideways scroll, slider row, ⋯ menu opens above the bar, tapping the book closes it, Pages / Search / Zoom open from it; desktop bar unchanged | pass |
 | Zoom: opens at 2× centred, 1×–4× limits, mouse drag pans, Esc closes, page keys ignored | pass |
 | Search: case / accent folding, counts, snippets, Enter and click jump to the page | pass |

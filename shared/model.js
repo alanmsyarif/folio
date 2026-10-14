@@ -120,7 +120,7 @@
       return { ask, remove };
     }
     if (!files.length) return { ask: null, remove: [] };
-    const writes = new Set([...VIEWER_FILES.map(f => f[1]), 'book.js', ...usedPaths(book)]);
+    const writes = new Set([...VIEWER_FILES.map(f => f[1]), 'book.js', COVER.file, ...usedPaths(book)]);
     const clash = files.filter(f => writes.has(f));
     const ask = clash.length
       ? `"${folder}" isn't a Folio book. These files in it will be replaced: ${clash.join(', ')}. Other files are kept.`
@@ -140,6 +140,73 @@
     const m = /^#p=(\d+)$/.exec(hash);
     return m ? Math.min(pageCount, Math.max(1, Number(m[1]))) - 1 : 0;
   }
+
+  // The book's public address, as given in the editor: http(s) only, always ending in "/" so
+  // "cover.jpg" resolves inside it. Anything else means "not set".
+  function bookUrl(u) {
+    if (typeof u !== 'string' || !u.trim()) return null;
+    let url;
+    try { url = new URL(u.trim()); } catch { return null; }
+    if (url.protocol !== 'https:' && url.protocol !== 'http:') return null;
+    url.hash = '';
+    url.search = '';
+    if (url.pathname.endsWith('/index.html')) url.pathname = url.pathname.slice(0, -'index.html'.length);
+    if (!url.pathname.endsWith('/')) url.pathname += '/';
+    return url.href;
+  }
+
+  const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+
+  // <title> and link-preview tags for the exported index.html. Sites that build previews
+  // (Facebook, WhatsApp, LinkedIn, X) need absolute addresses, so image and url tags are only
+  // written when the book's web address is known; the title and description always are.
+  const COVER = { file: 'cover.jpg', width: 1200, height: 630 };
+  function previewHead(book) {
+    const title = (book.title || '').trim() || 'Flipbook';
+    const desc = (book.description || '').trim();
+    const base = bookUrl(book.url);
+    const tags = [`<title>${esc(title)}</title>`, '<meta property="og:type" content="website">', `<meta property="og:title" content="${esc(title)}">`];
+    if (desc) tags.push(`<meta name="description" content="${esc(desc)}">`, `<meta property="og:description" content="${esc(desc)}">`);
+    if (base) {
+      tags.push(
+        `<meta property="og:url" content="${esc(base)}">`,
+        `<meta property="og:image" content="${esc(base + COVER.file)}">`,
+        `<meta property="og:image:width" content="${COVER.width}">`,
+        `<meta property="og:image:height" content="${COVER.height}">`,
+        '<meta name="twitter:card" content="summary_large_image">',
+      );
+    }
+    return tags.join('\n');
+  }
+
+  // The viewer template with its placeholder <title> swapped for previewHead(book).
+  function withPreview(html, book) {
+    if (!html.includes('<title>Flipbook</title>')) throw new Error('Viewer template has no <title>Flipbook</title>');
+    return html.replace('<title>Flipbook</title>', () => previewHead(book));
+  }
+
+  // iframe code for putting the book on another site, or null until its web address is set.
+  function embedCode(book) {
+    const base = bookUrl(book.url);
+    if (!base) return null;
+    const ratio = `${2 * (book.pageWidth || 3)} / ${book.pageHeight || 4}`; // a two-page spread
+    return `<iframe src="${esc(base)}" title="${esc((book.title || '').trim() || 'Flipbook')}" style="width:100%;aspect-ratio:${ratio};min-height:480px;border:0" allow="fullscreen; autoplay; clipboard-write; web-share" allowfullscreen loading="lazy"></iframe>`;
+  }
+
+  // Contents, edited as text: one entry per line, page number first ("4 Editor's letter").
+  function parseContents(text, pageCount) {
+    const entries = [], bad = [];
+    String(text).split(/\r?\n/).forEach((line, i) => {
+      if (!line.trim()) return;
+      const m = /^\s*(\d+)[\s.:)-]+(\S.*?)\s*$/.exec(line);
+      const page = m && Number(m[1]);
+      if (!m || page < 1 || page > pageCount) bad.push(i + 1);
+      else entries.push({ title: m[2], page });
+    });
+    return { entries, bad };
+  }
+
+  const formatContents = entries => (entries || []).map(e => e.page + ' ' + e.title).join('\n');
 
   // Lower-cases and strips accents, remembering where each folded character came from in s,
   // so a match found in the folded text can be cut out of the original.
@@ -202,12 +269,21 @@
       if (!Array.isArray(p.overlays)) p.overlays = [];
       if (p.text !== undefined && typeof p.text !== 'string') delete p.text; // search text is optional
     }
+    // Optional book fields: keep the well-formed parts, drop the rest.
+    for (const k of ['description', 'url']) if (book[k] !== undefined && typeof book[k] !== 'string') delete book[k];
+    if (book.contents !== undefined) {
+      book.contents = Array.isArray(book.contents)
+        ? book.contents.filter(e => e && typeof e.title === 'string' && Number.isInteger(e.page) && e.page >= 1 && e.page <= book.pages.length)
+          .map(e => ({ title: e.title, page: e.page }))
+        : [];
+    }
     return book;
   }
 
   const api = {
     VIEWER_FILES, toEmbedUrl, isSafeHref, clampRect, validateOverlay, firstInvalid,
-    newId, mediaName, isLocalPath, usedPaths, exportPlan, visiblePages, pageFromHash, searchPages, fitRect, serializeBook, parseBookJs,
+    newId, mediaName, isLocalPath, usedPaths, exportPlan, visiblePages, pageFromHash, searchPages, fitRect, bookUrl, previewHead, withPreview, embedCode,
+    parseContents, formatContents, COVER, serializeBook, parseBookJs,
   };
   root.FolioModel = api;
   if (typeof module === 'object' && module.exports) module.exports = api;

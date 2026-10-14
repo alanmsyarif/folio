@@ -12,6 +12,35 @@ const THUMB_SIDE = 320;
 const webp = (canvas, n) => new Promise((ok, fail) =>
   canvas.toBlob(b => (b ? ok(b) : fail(new Error('WebP encoding failed on page ' + n))), 'image/webp', QUALITY));
 
+// Page number (1-based) a bookmark points at, or null if it can't be resolved.
+async function destPage(pdf, dest) {
+  try {
+    const d = typeof dest === 'string' ? await pdf.getDestination(dest) : dest;
+    if (!Array.isArray(d)) return null;
+    const ref = d[0];
+    return (typeof ref === 'number' ? ref : await pdf.getPageIndex(ref)) + 1;
+  } catch {
+    return null;
+  }
+}
+
+// The PDF's bookmarks as contents entries: top level and one level down, in order.
+// ponytail: deeper levels are dropped and nesting is flattened; keep depth if readers need sub-sections.
+async function readContents(pdf) {
+  const outline = await pdf.getOutline().catch(() => null);
+  const out = [];
+  const walk = async (items, depth) => {
+    for (const it of items || []) {
+      const page = await destPage(pdf, it.dest);
+      const title = (it.title || '').replace(/\s+/g, ' ').trim();
+      if (page && title) out.push({ title, page });
+      if (depth < 1) await walk(it.items, depth + 1);
+    }
+  };
+  await walk(outline, 0);
+  return out;
+}
+
 export async function pdfToPages(file, onProgress) {
   // pdf.js 6 has destroy() on the loading task, not the document.
   const task = pdfjs.getDocument({ data: new Uint8Array(await file.arrayBuffer()) });
@@ -54,7 +83,7 @@ export async function pdfToPages(file, onProgress) {
       page.cleanup();
       onProgress(n, pdf.numPages);
     }
-    return { blobs, thumbs, texts, width, height };
+    return { blobs, thumbs, texts, contents: await readContents(pdf), width, height };
   } finally {
     await task.destroy();
   }

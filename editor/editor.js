@@ -188,6 +188,7 @@ function renderProps() {
       : state.preview ? 'Preview: overlays work as in the exported book.'
       : 'Drag on the page to draw a box, or click a box to edit it.';
     props.append(hint);
+    if (state.book && !state.preview) renderBookSettings();
     return;
   }
 
@@ -269,6 +270,64 @@ function renderProps() {
   props.append(del);
 }
 
+// Book-wide settings, shown while no box is selected: what link previews and the reader's
+// Contents list use. Saved into book.js on export.
+function renderBookSettings() {
+  const b = state.book;
+  const head = document.createElement('h2');
+  head.textContent = 'Book';
+  const set = (key, value) => { if (value) b[key] = value; else delete b[key]; state.dirty = true; };
+
+  const desc = Object.assign(document.createElement('textarea'), { id: 'b-desc', rows: 3, value: b.description || '' });
+  desc.placeholder = 'One or two sentences shown when the link is shared';
+  desc.onchange = () => set('description', desc.value.trim());
+
+  const url = input('b-url', 'url', { placeholder: 'https://…/books/taste-51/', value: b.url || '' });
+  const urlNote = document.createElement('p');
+  urlNote.className = 'hint';
+  const embed = Object.assign(document.createElement('textarea'), { id: 'b-embed', rows: 4, readOnly: true });
+  const copy = Object.assign(document.createElement('button'), { id: 'b-copy', type: 'button', textContent: 'Copy embed code' });
+  const showUrl = () => {
+    const code = M.embedCode(b);
+    urlNote.textContent = !b.url ? 'Where the exported folder will be online. Shared links then show the cover.'
+      : M.bookUrl(b.url) ? 'Shared links show the cover from ' + M.bookUrl(b.url) + 'cover.jpg'
+      : 'Use a full address starting with https://';
+    urlNote.classList.toggle('error', !!b.url && !M.bookUrl(b.url));
+    embed.value = code || '';
+    embed.hidden = copy.hidden = !code;
+  };
+  url.onchange = () => { set('url', url.value.trim()); showUrl(); };
+  copy.onclick = async () => {
+    await navigator.clipboard.writeText(embed.value);
+    copy.textContent = 'Copied';
+    setTimeout(() => { copy.textContent = 'Copy embed code'; }, 2000);
+  };
+  showUrl();
+
+  const toc = Object.assign(document.createElement('textarea'), { id: 'b-contents', rows: 8, value: M.formatContents(b.contents) });
+  toc.placeholder = "4 Editor's letter\n12 Island escapes";
+  const tocNote = document.createElement('p');
+  tocNote.className = 'hint';
+  const showToc = bad => {
+    tocNote.textContent = bad.length
+      ? `Line ${bad.join(', ')}: start with a page number from 1 to ${b.pages.length}, then the title.`
+      : 'One entry per line: page number, then title. Readers see these under Contents.';
+    tocNote.classList.toggle('error', bad.length > 0);
+  };
+  toc.onchange = () => {
+    const { entries, bad } = M.parseContents(toc.value, b.pages.length);
+    set('contents', entries.length ? entries : null);
+    showToc(bad);
+  };
+  showToc([]);
+
+  props.append(head,
+    ...field('Description', desc),
+    ...field('Web address', url), urlNote,
+    ...field('Embed on a website', embed), copy,
+    ...field('Contents', toc), tocNote);
+}
+
 function deleteSelected() {
   page().overlays = page().overlays.filter(o => o.id !== state.selected);
   state.selected = null;
@@ -281,7 +340,7 @@ $('pdf-input').onchange = async e => {
   if (!file) return;
   if (state.dirty && !confirm('Replace the current book? Unsaved boxes will be lost.')) return;
   try {
-    const { blobs, thumbs, texts, width, height } = await pdfToPages(file, (n, total) => status(`Rendering page ${n} of ${total}…`));
+    const { blobs, thumbs, texts, contents, width, height } = await pdfToPages(file, (n, total) => status(`Rendering page ${n} of ${total}…`));
     const map = new Map(blobs.map((b, i) => [`pages/${i + 1}.webp`, b]));
     thumbs.forEach((b, i) => map.set(`pages/${i + 1}-thumb.webp`, b));
     load({
@@ -289,6 +348,7 @@ $('pdf-input').onchange = async e => {
       title: file.name.replace(/\.pdf$/i, ''),
       pageWidth: width,
       pageHeight: height,
+      ...(contents.length ? { contents } : {}), // from the PDF's bookmarks
       pages: blobs.map((_, i) => ({
         image: `pages/${i + 1}.webp`, thumb: `pages/${i + 1}-thumb.webp`, overlays: [],
         ...(texts[i] ? { text: texts[i] } : {}), // scanned pages have none

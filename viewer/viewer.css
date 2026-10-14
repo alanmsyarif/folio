@@ -137,3 +137,15 @@ dialog button:disabled { opacity: .35; cursor: default; border-color: var(--line
 @media (prefers-reduced-motion: reduce) {
   #book, #thumb-list img { transition: none; }
 }
+
+/* Contents: titles left, page numbers right in the Didone, like a magazine's contents page. */
+#toc { width: min(560px, 92vw); max-height: 86vh; padding: 20px 24px 12px; border-radius: 6px; }
+#tocbar { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
+#tocbar h2 { margin: 0; font: 400 30px/1.1 var(--serif); color: var(--ivory); }
+#tocbar form { margin: 0; }
+#toc-list { list-style: none; margin: 0; padding: 0; }
+#toc-list li + li { border-top: 1px solid var(--line); }
+#toc-list button { width: 100%; padding: 12px 2px; border: 0; border-radius: 0; display: flex; align-items: baseline; gap: 16px; text-align: left; font-size: 16px; color: var(--ivory); }
+#toc-list button:hover, #toc-list button:focus-visible { background: rgb(181 152 90 / .08); }
+#toc-list span:first-child { flex: 1; }
+.toc-page { font-family: var(--serif); font-size: 20px; color: var(--gold-bright); font-variant-numeric: lining-nums tabular-nums; }

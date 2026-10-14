@@ -190,6 +190,69 @@ test('parseBookJs drops page text that is not a string', () => {
   assert.equal(b.pages[1].text, 'hi');
 });
 
+test('bookUrl keeps http(s) addresses and points them at the book folder', () => {
+  assert.equal(M.bookUrl('https://example.com/books/taste-51'), 'https://example.com/books/taste-51/');
+  assert.equal(M.bookUrl(' https://example.com/books/taste-51/index.html?x=1#p=4 '), 'https://example.com/books/taste-51/');
+  assert.equal(M.bookUrl('javascript:alert(1)'), null);
+  assert.equal(M.bookUrl('books/taste'), null);
+  assert.equal(M.bookUrl(''), null);
+});
+
+test('previewHead writes title and description always, image and url only with a web address', () => {
+  const plain = M.previewHead({ title: 'Asia Dreams 59', description: 'Island escapes' });
+  assert.match(plain, /<title>Asia Dreams 59<\/title>/);
+  assert.match(plain, /og:description" content="Island escapes"/);
+  assert.doesNotMatch(plain, /og:image/);
+  const full = M.previewHead({ title: 'T', url: 'https://example.com/b' });
+  assert.match(full, /og:image" content="https:\/\/example.com\/b\/cover.jpg"/);
+  assert.match(full, /og:url" content="https:\/\/example.com\/b\/"/);
+  assert.match(full, /twitter:card/);
+  assert.match(M.previewHead({}), /<title>Flipbook<\/title>/);
+});
+
+test('previewHead escapes text so a title cannot break out of the tags', () => {
+  const h = M.previewHead({ title: '"><script>x</script>', description: "Tom & Jerry's" });
+  assert.doesNotMatch(h, /<script>/);
+  assert.match(h, /&quot;&gt;&lt;script&gt;/);
+  assert.match(h, /Tom &amp; Jerry&#39;s/);
+});
+
+test('withPreview swaps the template title and refuses a template without one', () => {
+  const out = M.withPreview('<head>\n<title>Flipbook</title>\n</head>', { title: 'A $& B' });
+  assert.match(out, /<title>A \$&amp; B<\/title>/); // "$&" is not a replace() pattern here
+  assert.throws(() => M.withPreview('<head></head>', {}), /no <title>/);
+});
+
+test('embedCode needs the web address and frames a two-page spread', () => {
+  assert.equal(M.embedCode({ title: 'T' }), null);
+  const code = M.embedCode({ title: 'T', url: 'https://example.com/b', pageWidth: 1000, pageHeight: 1414 });
+  assert.match(code, /^<iframe src="https:\/\/example.com\/b\/"/);
+  assert.match(code, /aspect-ratio:2000 \/ 1414/);
+  assert.match(code, /allowfullscreen/);
+});
+
+test('parseContents reads "page title" lines and reports the ones it cannot use', () => {
+  const { entries, bad } = M.parseContents("4 Editor's letter\n\n12. Island escapes\n  30 - Dining\nCover story\n99 Too far", 40);
+  assert.deepEqual(entries, [{ title: "Editor's letter", page: 4 }, { title: 'Island escapes', page: 12 }, { title: 'Dining', page: 30 }]);
+  assert.deepEqual(bad, [5, 6]);
+  assert.equal(M.formatContents(entries), "4 Editor's letter\n12 Island escapes\n30 Dining");
+  assert.deepEqual(M.parseContents(M.formatContents(entries), 40).entries, entries);
+});
+
+test('parseBookJs keeps good contents entries and drops bad optional fields', () => {
+  const b = M.parseBookJs('window.BOOK = ' + JSON.stringify({ version: 1, url: 5, description: 'ok',
+    pages: [{ image: 'pages/1.webp', overlays: [] }, { image: 'pages/2.webp', overlays: [] }],
+    contents: [{ title: 'A', page: 2 }, { title: 'B', page: 3 }, { page: 1 }, null, { title: 'C', page: 1.5 }] }) + ';');
+  assert.deepEqual(b.contents, [{ title: 'A', page: 2 }]);
+  assert.equal(b.url, undefined);
+  assert.equal(b.description, 'ok');
+});
+
+test('exportPlan counts cover.jpg among the files Export writes', () => {
+  const plan = M.exportPlan({ pages: [] }, { folder: 'x', bookText: null, files: ['cover.jpg'] });
+  assert.match(plan.ask, /cover\.jpg/);
+});
+
 test('fitRect centres a page of another shape inside the book page size', () => {
   assert.deepEqual(M.fitRect(2000, 1000, 1000, 1414), { x: 0, y: 457, w: 1000, h: 500 });
   assert.deepEqual(M.fitRect(500, 1000, 1000, 1414), { x: 147, y: 0, w: 707, h: 1414 });

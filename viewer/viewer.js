@@ -145,6 +145,26 @@
   });
   document.getElementById('grid').onclick = () => thumbs.showModal();
 
+  // Contents: from the PDF's bookmarks or typed in the editor. Hidden when the book has none.
+  const toc = document.getElementById('toc');
+  const contents = Array.isArray(B.contents) ? B.contents : [];
+  document.getElementById('contents').hidden = !contents.length;
+  document.getElementById('toc-list').replaceChildren(...contents.map(e => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    const title = document.createElement('span');
+    title.textContent = e.title; // text node: titles are never parsed as HTML
+    const page = document.createElement('span');
+    page.className = 'toc-page';
+    page.textContent = e.page;
+    b.append(title, page);
+    b.onclick = () => { toc.close(); goTo(e.page); };
+    const li = document.createElement('li');
+    li.append(b);
+    return li;
+  }));
+  document.getElementById('contents').onclick = () => toc.showModal();
+
   // Search over the text baked at PDF import. Books without any (scans, older exports) get no button.
   // ponytail: results jump to the page but don't highlight the words on it; that needs word positions from import.
   const finder = document.getElementById('finder');
@@ -224,7 +244,7 @@
     if (tools.matches(':popover-open') && !e.target.closest('#tools, #more')) tools.hidePopover();
   }, true);
   document.addEventListener('keydown', e => {
-    if (e.target instanceof HTMLInputElement || thumbs.open || zoomer.open || finder.open) return; // arrows belong to the number box and slider
+    if (e.target instanceof HTMLInputElement || thumbs.open || zoomer.open || finder.open || toc.open) return; // arrows belong to the number box and slider
     if (e.key === 'Home') goTo(1);
     if (e.key === 'End') goTo(n);
     if (e.key === 'ArrowLeft') flip.flipPrev();

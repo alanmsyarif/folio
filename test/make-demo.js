@@ -2,7 +2,7 @@
 // Usage: npm run demo, then open demo/index.html (file://) or http://127.0.0.1:8080/demo/ via npm start.
 const fs = require('fs');
 const path = require('path');
-const { serializeBook, VIEWER_FILES } = require('../shared/model.js');
+const { serializeBook, withPreview, VIEWER_FILES } = require('../shared/model.js');
 
 const root = path.join(__dirname, '..');
 const out = path.join(root, 'demo');
@@ -50,7 +50,20 @@ pages[5].overlays.push(
   { id: 'd7', type: 'embed', x: 0.05, y: 0.3, w: 0.9, h: 0.3, url: 'https://youtu.be/aqz-KE-bpKQ', autoplay: true },
 );
 
+const book = {
+  version: 1, title: 'Folio demo', pageWidth: W, pageHeight: H, pages,
+  description: 'A six-page harbour town guide for checking the Folio reader.',
+  url: 'https://example.com/books/folio-demo/',
+  contents: [
+    { title: 'The harbour town', page: 1 },
+    { title: 'Getting there', page: 2 },
+    { title: 'Cliff walks', page: 3 },
+    { title: 'Where to eat', page: 4 },
+    { title: 'Evenings at the lighthouse', page: 5 },
+  ],
+};
 for (const [from, to] of VIEWER_FILES) fs.copyFileSync(path.join(root, from), path.join(out, to));
-fs.writeFileSync(path.join(out, 'book.js'),
-  serializeBook({ version: 1, title: 'Folio demo', pageWidth: W, pageHeight: H, pages }));
+// Same <title> and link-preview tags Export writes (no cover.jpg here: the demo pages are SVG).
+fs.writeFileSync(path.join(out, 'index.html'), withPreview(fs.readFileSync(path.join(root, 'viewer/index.html'), 'utf8'), book));
+fs.writeFileSync(path.join(out, 'book.js'), serializeBook(book));
 console.log('Wrote ' + out);

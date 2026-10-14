@@ -20,13 +20,33 @@ async function readBlob(root, path) {
   return new Blob([await file.arrayBuffer()], { type: file.type });
 }
 
+// The link-preview card: page 1 centred on the reader's espresso, at the size Facebook,
+// WhatsApp, LinkedIn and X expect (wide, so a portrait cover would otherwise be cropped).
+async function coverCard(book, blobs) {
+  const src = blobs.get(book.pages[0]?.image);
+  if (!src) return null;
+  const bmp = await createImageBitmap(src);
+  const canvas = Object.assign(document.createElement('canvas'), { width: M.COVER.width, height: M.COVER.height });
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#221e1a';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  const pad = 32;
+  const r = M.fitRect(bmp.width, bmp.height, canvas.width, canvas.height - 2 * pad);
+  ctx.drawImage(bmp, r.x, r.y + pad, r.w, r.h);
+  bmp.close();
+  return new Promise((ok, fail) => canvas.toBlob(b => (b ? ok(b) : fail(new Error('Could not draw cover.jpg'))), 'image/jpeg', 0.88));
+}
+
 export async function exportBook(book, blobs) {
   // Fetch the viewer template before touching the folder, so a failure writes nothing.
   const template = await Promise.all(M.VIEWER_FILES.map(async ([from, to]) => {
     const res = await fetch('../' + from);
     if (!res.ok) throw new Error('Viewer file missing: ' + from);
+    // index.html carries this book's title and link-preview tags.
+    if (to === 'index.html') return [to, new Blob([M.withPreview(await res.text(), book)], { type: 'text/html' })];
     return [to, await res.blob()];
   }));
+  const cover = await coverCard(book, blobs);
 
   const root = await window.showDirectoryPicker({ id: 'folio', mode: 'readwrite' });
   const files = await entryNames(root, 'file');
@@ -42,6 +62,7 @@ export async function exportBook(book, blobs) {
   if (plan.ask && !confirm(plan.ask)) return null;
 
   for (const [to, blob] of template) await writeFile(root, to, blob);
+  if (cover) await writeFile(root, M.COVER.file, cover);
   for (const path of M.usedPaths(book)) {
     const [folder, name] = path.split('/');
     await writeFile(await root.getDirectoryHandle(folder, { create: true }), name, blobs.get(path));
