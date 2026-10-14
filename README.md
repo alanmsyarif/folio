@@ -42,7 +42,8 @@ arrow keys. The bar also has:
 - **Fullscreen**.
 
 The address follows the page (`index.html#p=12`), so a reload or a shared link opens that page.
-Each page loads as a thumbnail first; the full page loads when the reader gets near it.
+Each page loads as a thumbnail first; the full page loads when the reader gets near it and drops
+back to the thumbnail once they're far away, so long books stay light on memory.
 
 ## Share
 
@@ -93,6 +94,7 @@ Vendored: pdf.js 6.4.299, page-flip 2.0.7 (see vendor/LICENSES.md).
 | Video controls hidden while playing, shown on hover / focus and for a paused click-to-play video | pass (autoplay forced on; the blocked-autoplay path not run) |
 | PDF import bakes 320 px WebP thumbnails and page text | pass |
 | Viewer: pages near the reader load full size, the rest stay thumbnails; grid uses thumbnails | pass |
+| 40-page book: only the spread ±2–3 pages hold full images; far pages return to thumbnails after jumps | pass |
 | Zoom: opens at 2× centred, 1×–4× limits, mouse drag pans, Esc closes, page keys ignored | pass |
 | Search: case / accent folding, counts, snippets, Enter and click jump to the page | pass |
 

@@ -15,9 +15,10 @@
     el.className = 'page';
     const img = document.createElement('img');
     img.className = 'fo-page';
-    // Start on the small thumbnail; loadNear() swaps in the full page once the reader is close.
+    // Start on the small thumbnail; loadNear() swaps in the full page once the reader is close
+    // and back again once they're far away.
     img.src = p.thumb || p.image;
-    if (p.thumb) img.dataset.full = p.image;
+    if (p.thumb) Object.assign(img.dataset, { full: p.image, thumb: p.thumb });
     img.alt = 'Page ' + (i + 1);
     img.draggable = false;
     const layer = document.createElement('div');
@@ -65,12 +66,16 @@
   flip.on('changeState', e => { if (e.data === 'flipping') bookEl.style.transform = ''; });
   addEventListener('resize', () => centre());
 
-  // ponytail: full pages are loaded, never unloaded; drop far ones if huge books run out of memory.
+  // Full pages for the spread and its neighbours; pages well away drop back to their thumbnail so a
+  // long read doesn't keep every full page in memory. The gap between the two ranges stops pages
+  // flipping between the two while the reader goes back and forth.
   function loadNear(i) {
-    for (let k = i - 2; k <= i + 3; k++) {
-      const img = pageEls[k]?.querySelector('img.fo-page');
-      if (img?.dataset.full) { img.src = img.dataset.full; delete img.dataset.full; }
-    }
+    pageEls.forEach((el, k) => {
+      const img = el.querySelector('img.fo-page');
+      if (!img.dataset.full) return; // no thumbnail: always the full page
+      const want = k >= i - 2 && k <= i + 3 ? img.dataset.full : k < i - 8 || k > i + 9 ? img.dataset.thumb : null;
+      if (want && img.getAttribute('src') !== want) img.src = want;
+    });
   }
 
   let visible = [];
