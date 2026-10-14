@@ -10,11 +10,20 @@
 <body>
 <div id="stage"><div id="book"></div></div>
 <nav id="bar" aria-label="Book controls">
+  <button id="first" type="button" aria-label="First page">«</button>
   <button id="prev" type="button" aria-label="Previous page">‹</button>
-  <span id="count" aria-live="polite"></span>
+  <label id="count"><input id="num" type="text" inputmode="numeric" aria-label="Page number"> <span id="total"></span></label>
   <button id="next" type="button" aria-label="Next page">›</button>
+  <button id="last" type="button" aria-label="Last page">»</button>
+  <input id="seek" type="range" min="1" aria-label="Go to page">
+  <button id="grid" type="button">Pages</button>
+  <button id="share" type="button" hidden>Share</button>
   <button id="full" type="button">Fullscreen</button>
 </nav>
+<dialog id="thumbs" aria-label="All pages">
+  <form method="dialog"><button id="thumbs-close">Close</button></form>
+  <div id="thumb-list"></div>
+</dialog>
 <script src="page-flip.browser.js"></script>
 <script src="book.js"></script>
 <script src="model.js"></script>

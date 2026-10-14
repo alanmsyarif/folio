@@ -143,6 +143,14 @@ test('visiblePages follows page-flip spreads (cover alone, then pairs)', () => {
   assert.deepEqual(M.visiblePages(3, 6, true), [3]);
 });
 
+test('pageFromHash reads #p=N and clamps it to the book', () => {
+  assert.equal(M.pageFromHash('#p=4', 6), 3);
+  assert.equal(M.pageFromHash('#p=99', 6), 5);
+  assert.equal(M.pageFromHash('#p=0', 6), 0);
+  assert.equal(M.pageFromHash('', 6), 0);
+  assert.equal(M.pageFromHash('#p=2x', 6), 0);
+});
+
 test('fitRect centres a page of another shape inside the book page size', () => {
   assert.deepEqual(M.fitRect(2000, 1000, 1000, 1414), { x: 0, y: 457, w: 1000, h: 500 });
   assert.deepEqual(M.fitRect(500, 1000, 1000, 1414), { x: 147, y: 0, w: 707, h: 1414 });

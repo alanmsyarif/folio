@@ -133,6 +133,12 @@
     return [index, index + 1].filter(n => n < pageCount);
   }
 
+  // Page index from a viewer address hash such as "#p=12" (1-based); anything else means the cover.
+  function pageFromHash(hash, pageCount) {
+    const m = /^#p=(\d+)$/.exec(hash);
+    return m ? Math.min(pageCount, Math.max(1, Number(m[1]))) - 1 : 0;
+  }
+
   // Where a page of size srcW×srcH goes, scaled to fit and centred, inside a boxW×boxH page.
   function fitRect(srcW, srcH, boxW, boxH) {
     const scale = Math.min(boxW / srcW, boxH / srcH);
@@ -159,7 +165,7 @@
 
   const api = {
     VIEWER_FILES, toEmbedUrl, isSafeHref, clampRect, validateOverlay, firstInvalid,
-    newId, mediaName, isLocalPath, usedPaths, exportPlan, visiblePages, fitRect, serializeBook, parseBookJs,
+    newId, mediaName, isLocalPath, usedPaths, exportPlan, visiblePages, pageFromHash, fitRect, serializeBook, parseBookJs,
   };
   root.FolioModel = api;
   if (typeof module === 'object' && module.exports) module.exports = api;

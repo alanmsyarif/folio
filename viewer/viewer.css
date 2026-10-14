@@ -3,10 +3,20 @@ body { display: flex; flex-direction: column; background: #2e2e2e; color: #eee; 
 /* overflow: page-flip pads .stf__wrapper to width x page ratio, taller than the stage on wide
    windows; unclipped it covers #bar and swallows its clicks. */
 #stage { flex: 1; min-height: 0; padding: 16px; box-sizing: border-box; overflow: hidden; }
-#book { width: 100%; height: 100%; }
+#book { width: 100%; height: 100%; transition: transform .5s ease; }
 .page { background: #fff; }
 .fo-page { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; user-select: none; }
 #bar { display: flex; gap: 8px; align-items: center; justify-content: center; padding: 8px 16px 12px; }
 #bar button { font: inherit; min-width: 44px; min-height: 36px; border: 1px solid #666; border-radius: 6px; background: #3b3b3b; color: inherit; cursor: pointer; }
 #bar button:hover { background: #4a4a4a; }
 #count { min-width: 5em; text-align: center; font-variant-numeric: tabular-nums; }
+#bar { flex-wrap: wrap; }
+#num { width: 4.5em; font: inherit; text-align: right; background: #3b3b3b; color: inherit; border: 1px solid #666; border-radius: 6px; padding: 4px; }
+#seek { flex: 1 1 160px; max-width: 480px; accent-color: #ddd; }
+#thumbs { width: min(960px, 92vw); max-height: 86vh; padding: 16px; border: 0; border-radius: 10px; background: #2e2e2e; color: inherit; }
+#thumbs::backdrop { background: rgb(0 0 0 / .6); }
+#thumbs form { text-align: right; margin-bottom: 12px; }
+#thumbs button { font: inherit; border: 1px solid #666; border-radius: 6px; background: #3b3b3b; color: inherit; cursor: pointer; }
+#thumb-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 12px; }
+#thumb-list button { padding: 6px; display: grid; gap: 4px; }
+#thumb-list img { width: 100%; aspect-ratio: var(--ratio, 3 / 4); object-fit: contain; background: #fff; }

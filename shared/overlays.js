@@ -15,7 +15,18 @@
     } else if (o.type === 'video') {
       el = document.createElement('video');
       el.src = srcFor(o.src);
-      el.controls = true;
+      // Controls show while pointed at or focused, and while a click-to-play video waits paused;
+      // otherwise they hide, so a playing video is clean. Autoplay boxes are never bare-paused-with-
+      // controls, so the turn animation doesn't flash a play button.
+      let near = false;
+      const sync = () => { el.controls = near || (el.paused && !o.autoplay); };
+      for (const [type, value] of [['mouseenter', true], ['focus', true], ['mouseleave', false], ['blur', false]]) {
+        el.addEventListener(type, () => { near = value; sync(); });
+      }
+      el.addEventListener('play', sync);
+      el.addEventListener('pause', sync);
+      el.tabIndex = 0; // reachable by keyboard even while its controls are hidden
+      sync();
       el.playsInline = true;
       el.preload = 'metadata';
       if (o.autoplay) {
@@ -71,7 +82,7 @@
   function setActive(container, on) {
     for (const v of container.querySelectorAll('video.fo-overlay')) {
       if (!on) v.pause();
-      else if ('autoplay' in v.dataset) v.play().catch(() => {}); // rejected if the browser still blocks it
+      else if ('autoplay' in v.dataset) v.play().catch(() => { v.controls = true; }); // blocked: let the reader press play
     }
     for (const f of container.querySelectorAll('iframe.fo-overlay')) {
       if ('autoplay' in f.dataset) f.src = on ? f.dataset.src : 'about:blank';
