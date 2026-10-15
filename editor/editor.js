@@ -14,6 +14,7 @@ const state = {
   current: 0,
   selected: null,   // overlay id
   preview: false,
+  panel: 'box',     // right panel tab: 'box' or 'book'
   dirty: false,
 };
 
@@ -100,6 +101,7 @@ function load(book, blobs) {
   $('title').value = book.title || '';
   for (const id of ['title', 'preview', 'export']) $(id).disabled = false;
   $('page').hidden = false;
+  $('start').hidden = true;
   history.done = [snap()];
   history.undone = [];
   updateUndoButtons();
@@ -180,15 +182,27 @@ function input(id, type, attrs = {}) {
 
 function renderProps() {
   props.replaceChildren();
-  const o = state.book && !state.preview && selected();
+  if (!state.book) return; // the start panel on the mat says what to do
+  if (state.preview) {
+    props.append(Object.assign(document.createElement('p'), { className: 'hint', textContent: 'Preview: boxes work as in the exported book.' }));
+    return;
+  }
+  // Two tabs: the selected box, and settings for the whole book.
+  const tabs = document.createElement('div');
+  tabs.className = 'tabs';
+  tabs.setAttribute('role', 'tablist');
+  for (const [key, text] of [['box', 'Box'], ['book', 'Book']]) {
+    const t = Object.assign(document.createElement('button'), { type: 'button', textContent: text, id: 'tab-' + key });
+    t.setAttribute('role', 'tab');
+    t.setAttribute('aria-selected', String(state.panel === key));
+    t.onclick = () => { state.panel = key; renderProps(); };
+    tabs.append(t);
+  }
+  props.append(tabs);
+  if (state.panel === 'book') { renderBookSettings(); return; }
+  const o = selected();
   if (!o) {
-    const hint = document.createElement('p');
-    hint.className = 'hint';
-    hint.textContent = !state.book ? 'Open a PDF to start.'
-      : state.preview ? 'Preview: overlays work as in the exported book.'
-      : 'Drag on the page to draw a box, or click a box to edit it.';
-    props.append(hint);
-    if (state.book && !state.preview) renderBookSettings();
+    props.append(Object.assign(document.createElement('p'), { className: 'hint', textContent: 'Drag on the page to draw a box, or click a box to edit it.' }));
     return;
   }
 
@@ -274,8 +288,6 @@ function renderProps() {
 // Contents list use. Saved into book.js on export.
 function renderBookSettings() {
   const b = state.book;
-  const head = document.createElement('h2');
-  head.textContent = 'Book';
   const set = (key, value) => { if (value) b[key] = value; else delete b[key]; state.dirty = true; };
 
   const desc = Object.assign(document.createElement('textarea'), { id: 'b-desc', rows: 3, value: b.description || '' });
@@ -326,7 +338,7 @@ function renderBookSettings() {
   const date = input('b-date', 'date', { value: b.published || '' });
   date.onchange = () => set('published', date.value);
 
-  props.append(head,
+  props.append(
     ...field('Series', series),
     ...field('Issue date', date),
     ...field('Description', desc),
@@ -341,10 +353,26 @@ function deleteSelected() {
   changed();
 }
 
-$('pdf-input').onchange = async e => {
+$('pdf-input').onchange = e => {
   const file = e.target.files[0];
   e.target.value = '';
-  if (!file) return;
+  if (file) importPdf(file);
+};
+
+// Drop a PDF anywhere on the mat.
+$('stage').addEventListener('dragover', e => {
+  if ([...e.dataTransfer.items].some(i => i.kind === 'file')) { e.preventDefault(); $('stage').classList.add('drop'); }
+});
+$('stage').addEventListener('dragleave', e => { if (e.target === $('stage')) $('stage').classList.remove('drop'); });
+$('stage').addEventListener('drop', e => {
+  e.preventDefault();
+  $('stage').classList.remove('drop');
+  const file = [...e.dataTransfer.files].find(f => f.type === 'application/pdf' || /\.pdf$/i.test(f.name));
+  if (file) importPdf(file);
+  else status('Drop a PDF file to start a book.', true);
+});
+
+async function importPdf(file) {
   if (state.dirty && !confirm('Replace the current book? Unsaved boxes will be lost.')) return;
   try {
     const { blobs, thumbs, texts, contents, width, height } = await pdfToPages(file, (n, total) => status(`Rendering page ${n} of ${total}…`));
@@ -366,7 +394,7 @@ $('pdf-input').onchange = async e => {
   } catch (err) {
     status('Could not open PDF: ' + err.message, true);
   }
-};
+}
 
 $('title').oninput = e => { state.book.title = e.target.value; state.dirty = true; };
 addEventListener('beforeunload', e => { if (state.dirty) e.preventDefault(); });
@@ -389,6 +417,7 @@ layer.addEventListener('pointerdown', e => {
     mode = 'draw';
   }
   state.selected = o.id;
+  state.panel = 'box';
   const orig = { x: o.x, y: o.y, w: o.w, h: o.h };
   layer.setPointerCapture(e.pointerId);
   renderLayer();
@@ -453,7 +482,7 @@ $('redo').onclick = redo;
 
 if (!('showDirectoryPicker' in window)) {
   for (const id of ['open-folder', 'export', 'library']) $(id).title = 'Needs Chrome, Edge or Opera';
-  $('open-folder').disabled = $('library').disabled = true;
+  $('open-folder').disabled = $('library').disabled = $('start-folder').disabled = true;
   status('Export and Open folder need a Chromium browser (Chrome, Edge, Opera).', true);
 }
 
@@ -477,6 +506,7 @@ $('export').onclick = async () => {
   }
 };
 
+$('start-folder').onclick = () => $('open-folder').click();
 $('open-folder').onclick = async () => {
   if (state.dirty && !confirm('Discard unsaved changes?')) return;
   try {

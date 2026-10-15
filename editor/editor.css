@@ -82,7 +82,6 @@ main { flex: 1; min-height: 0; display: grid; grid-template-columns: 132px 1fr 2
 #props button:hover { border-color: var(--proof); }
 #props .error { color: var(--proof); }
 #props .hint { color: var(--ink-dim); overflow-wrap: anywhere; }
-#props h2 { margin: 24px 0 0; padding-top: 16px; border-top: 1px solid var(--rule); font-size: 13px; font-weight: 600; color: var(--ink-dim); }
 #props textarea { width: 100%; font: inherit; padding: 7px 8px; border: 1px solid var(--rule); border-radius: 3px; background: #fff; color: var(--ink); resize: vertical; }
 #props textarea:focus { outline: none; border-color: var(--pencil); box-shadow: 0 0 0 2px var(--pencil-wash); }
 #b-embed { font: 12px/1.4 Consolas, "Cascadia Mono", Menlo, monospace; color: var(--ink-dim); }
@@ -100,3 +99,21 @@ main { flex: 1; min-height: 0; display: grid; grid-template-columns: 132px 1fr 2
 #lib-dialog .actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px; }
 #lib-dialog button { font: inherit; padding: 6px 14px; border: 1px solid var(--rule); border-radius: 3px; background: #fff; color: var(--ink); cursor: pointer; }
 #lib-dialog button.primary { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+
+/* Start panel on the empty mat; the whole mat accepts a dropped PDF. */
+#start { max-width: 420px; padding: 32px 36px; background: var(--paper); border-radius: 4px; box-shadow: 0 10px 30px rgb(0 0 0 / .3); text-align: center; }
+#start[hidden] { display: none; }
+#start h1 { margin: 0; font-size: 20px; }
+#start p { margin: 10px 0 0; color: var(--ink-dim); }
+#start .actions { display: flex; justify-content: center; gap: 10px; margin-top: 22px; }
+#start .btn, #start button { font: inherit; padding: 8px 16px; border: 1px solid var(--rule); border-radius: 3px; background: #fff; color: var(--ink); cursor: pointer; }
+#start .btn.primary { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+#start button:disabled { opacity: .45; cursor: default; }
+#stage.drop { outline: 3px dashed var(--pencil); outline-offset: -12px; }
+
+/* Box / Book tabs at the top of the right panel. */
+/* #props .tabs button outranks the panel's #props button (Delete's red outline). */
+#props .tabs { display: flex; margin: -4px 0 8px; border-bottom: 1px solid var(--rule); }
+#props .tabs button { flex: 1; margin: 0; padding: 8px 0; border: 0; border-bottom: 2px solid transparent; border-radius: 0; background: none; color: var(--ink-dim); font-weight: 600; }
+#props .tabs button[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--pencil); }
+#props .tabs button:hover { color: var(--ink); }
