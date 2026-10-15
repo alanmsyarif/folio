@@ -8,7 +8,13 @@
 <link rel="stylesheet" href="viewer.css">
 </head>
 <body>
-<div id="stage"><div id="book"></div></div>
+<a id="back" href="../index.html" hidden></a>
+<div id="stage">
+  <div id="book"></div>
+  <!-- Page-turn zones beside the book; the bar's ‹ › are the keyboard-reachable versions. -->
+  <button id="side-prev" class="side" type="button" tabindex="-1" aria-hidden="true">‹</button>
+  <button id="side-next" class="side" type="button" tabindex="-1" aria-hidden="true">›</button>
+</div>
 <nav id="bar" aria-label="Book controls">
   <button id="first" type="button" aria-label="First page">«</button>
   <button id="prev" type="button" aria-label="Previous page">‹</button>

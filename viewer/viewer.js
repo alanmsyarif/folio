@@ -64,7 +64,34 @@
   // 'flipping' = the turn animation has started (button, key, or a released drag): un-centre now so
   // the slide and the turn happen together instead of one after the other.
   flip.on('changeState', e => { if (e.data === 'flipping') bookEl.style.transform = ''; });
-  addEventListener('resize', () => centre());
+  addEventListener('resize', () => { centre(); placeSides(); });
+
+  // Click zones in the margins beside the book, as wide as the margin allows (never over the
+  // pages, where page-flip's corner drag lives). Hidden when there's no room, and at either end.
+  const sidePrev = document.getElementById('side-prev');
+  const sideNext = document.getElementById('side-next');
+  sidePrev.onclick = () => flip.flipPrev();
+  sideNext.onclick = () => flip.flipNext();
+  function placeSides() {
+    const room = Math.min(96, flip.getBoundsRect().left + 16); // 16 = #stage side padding
+    for (const s of [sidePrev, sideNext]) s.style.width = room + 'px';
+    const i = flip.getCurrentPageIndex();
+    sidePrev.hidden = room < 40 || i === 0;
+    sideNext.hidden = room < 40 || visible.includes(n - 1);
+  }
+
+  // Back to the library, when this book sits in a library folder and isn't the one embedded on it.
+  if (window.top === window) {
+    const lib = document.createElement('script');
+    lib.src = '../library-data.js'; // absent for a lone book; the request then just fails quietly
+    lib.onload = () => {
+      if (!window.LIBRARY) return;
+      const back = document.getElementById('back');
+      back.textContent = '‹ ' + (window.LIBRARY.name || 'All issues');
+      back.hidden = false;
+    };
+    document.head.append(lib);
+  }
 
   // Full pages for the spread and its neighbours; pages well away drop back to their thumbnail so a
   // long read doesn't keep every full page in memory. The gap between the two ranges stops pages
@@ -90,6 +117,7 @@
     for (const idx of visible) if (!now.includes(idx) && pageEls[idx]) FolioOverlays.setActive(pageEls[idx], false);
     for (const idx of now) if (!visible.includes(idx) && pageEls[idx]) FolioOverlays.setActive(pageEls[idx], true);
     visible = now;
+    placeSides();
     if (document.activeElement !== num) num.value = now.map(x => x + 1).join('–'); // "2–3" on a spread
     centre();
   }

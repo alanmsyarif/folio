@@ -149,3 +149,22 @@ dialog button:disabled { opacity: .35; cursor: default; border-color: var(--line
 #toc-list button:hover, #toc-list button:focus-visible { background: rgb(181 152 90 / .08); }
 #toc-list span:first-child { flex: 1; }
 .toc-page { font-family: var(--serif); font-size: 20px; color: var(--gold-bright); font-variant-numeric: lining-nums tabular-nums; }
+
+/* Way back to the library, above the book. */
+#back { align-self: flex-start; margin: 12px 0 0 20px; padding: 4px 2px; color: var(--ivory-dim); font-size: 14px; text-decoration: none; border-bottom: 1px solid transparent; }
+#back:hover { color: var(--ivory); border-bottom-color: var(--gold); }
+#back[hidden] { display: none; }
+#back:not([hidden]) + #stage { padding-top: 8px; }
+
+/* Page-turn zones in the margins. */
+#stage { position: relative; }
+.side {
+  position: absolute; top: 0; bottom: 0; z-index: 5; padding: 0; border: 0; background: none; cursor: pointer;
+  font: 54px/1 var(--serif); color: var(--ivory); opacity: .28; transition: opacity .15s, background-color .15s;
+}
+.side:hover { opacity: .9; background: rgb(237 230 216 / .04); }
+.side[hidden] { display: none; }
+#side-prev { left: 0; }
+#side-next { right: 0; }
+@media (max-width: 720px) { .side { display: none; } } /* phones swipe */
+@media (prefers-reduced-motion: reduce) { .side { transition: none; } }
